@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root {
+      --bg: #14141f;
+      --panel: #1a1a2e;
+      --border: #2d2d44;
+      --cyan: #00ffff;
+      --gold: #ffde59;
+      --text: #ffffff;
+      --text-dim: #8a8aa3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 50% 0%, #1c1c30 0%, var(--bg) 60%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      padding: 32px 20px 20px;
+    }
+
+    .header .icon {
+      font-size: 40px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .header .agent-name {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--cyan);
+    }
+
+    .progress-wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 20px 8px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      border-radius: 999px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--gold));
+      border-radius: 999px;
+      transition: width 0.6s ease;
+      width: 0%;
+    }
+
+    .grid {
+      max-width: 480px;
+      margin: 24px auto 60px;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .badge-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 12px 14px;
+      text-align: center;
+      position: relative;
+    }
+
+    .badge-card.locked {
+      background: #1e1e2e;
+      opacity: 0.55;
+    }
+
+    .badge-img-wrap {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 10px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #0f0f1c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--cyan);
+    }
+
+    .badge-card.locked .badge-img-wrap {
+      border-color: var(--border);
+      filter: grayscale(100%) brightness(0.5);
+    }
+
+    .badge-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .lock-icon { font-size: 26px; color: var(--text-dim); }
+
+    .badge-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .badge-card.locked .badge-name { color: var(--text-dim); }
+
+    .badge-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .badge-check {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 14px;
+      color: var(--gold);
+    }
+
+    .state-box {
+      max-width: 480px;
+      margin: 60px auto;
+      padding: 0 32px;
+      text-align: center;
+    }
+
+    .state-box .emoji { font-size: 40px; display: block; margin-bottom: 14px; }
+
+    .state-box p {
+      color: var(--text-dim);
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    /* 綁定畫面 */
+    .bind-box {
+      max-width: 360px;
+      margin: 50px auto;
+      padding: 0 24px;
+      text-align: center;
+    }
+
+    .bind-box .emoji { font-size: 44px; display: block; margin-bottom: 16px; }
+
+    .bind-box h2 {
+      font-size: 17px;
+      margin: 0 0 8px;
+    }
+
+    .bind-box p {
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 0 0 20px;
+    }
+
+    .bind-box input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 15px;
+      text-align: center;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .bind-box input:focus { outline: none; border-color: var(--cyan); }
+
+    .bind-box button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(90deg, var(--cyan), #4dd0e1);
+      color: #0f0f1c;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .bind-box button:disabled { opacity: 0.5; }
+
+    .bind-error {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 10px;
+      min-height: 16px;
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--panel) 25%, #23233a 37%, var(--panel) 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+      border-radius: 16px;
+      height: 132px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span class="icon">🏆</span>
+    <h1>我的成就收藏庫</h1>
+    <div class="agent-name" id="agentName"></div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap" style="display:none;">
+    <div class="progress-label">
+      <span>收集進度</span>
+      <span id="progressText">0 / 0</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="grid">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  </div>
+
+  <script>
+    // ====== 除錯用：把任何 JS 錯誤直接顯示在畫面上，不用連接電腦看 console ======
+    window.onerror = function(msg, url, line, col, error) {
+      document.getElementById("content").innerHTML =
+        '<div class="state-box"><span class="emoji">❌</span>' +
+        '<p style="text-align:left;word-break:break-all;">JS 錯誤：' + msg +
+        '<br>位置：第 ' + line + ' 行<br>' +
+        (error && error.stack ? error.stack.replace(/\n/g, '<br>') : '') +
+        '</p></div>';
+      return true;
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      document.getElementById("content").innerHTML =
+        '<div class="state-box"><span class="emoji">❌</span>' +
+        '<p style="text-align:left;word-break:break-all;">未攔截的 Promise 錯誤：' +
+        (event.reason && event.reason.message ? event.reason.message : JSON.stringify(event.reason)) +
+        '</p></div>';
+    });
+    // ====== 除錯攔截器結束 ======
+
+    // ⚠️ 請填入你的 Apps Script 部署網址（.../exec 結尾）
+    var GAS_API_URL = "https://script.google.com/macros/s/AKfycbyCf_KZ1Qp9m4-7vqJUTM5Frb4vkPJNnv_-oQdVCpsFBvKw0cHpU4qsxtTzlEPsmL2LtQ/exec";
+
+    var currentUserId = null;
+
+    function driveThumb(fileId) {
+      if (!fileId) return "";
+      return "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w200";
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement("div");
+      div.textContent = str || "";
+      return div.innerHTML;
+    }
+
+    function renderState(emoji, message) {
+      document.getElementById("progressWrap").style.display = "none";
+      document.getElementById("content").innerHTML =
+        '<div class="state-box">' +
+          '<span class="emoji">' + emoji + '</span>' +
+          '<p>' + escapeHtml(message) + '</p>' +
+        '</div>';
+    }
+
+    // 顯示「首次使用，請輸入代碼綁定」畫面
+    function renderBindForm(errorMsg) {
+      document.getElementById("progressWrap").style.display = "none";
+      document.getElementById("content").innerHTML =
+        '<div class="bind-box">' +
+          '<span class="emoji">🔑</span>' +
+          '<h2>第一次使用，請先綁定身份</h2>' +
+          '<p>輸入你的探員專屬代碼完成綁定，之後開啟本頁面會自動辨識，不需要再輸入</p>' +
+          '<input type="text" id="bindCodeInput" placeholder="請輸入代碼" autocapitalize="off" autocorrect="off">' +
+          '<button id="bindSubmitBtn">完成綁定</button>' +
+          '<div class="bind-error" id="bindErrorMsg">' + (errorMsg ? escapeHtml(errorMsg) : '') + '</div>' +
+        '</div>';
+
+      document.getElementById("bindSubmitBtn").addEventListener("click", submitBind);
+      document.getElementById("bindCodeInput").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") submitBind();
+      });
+    }
+
+    function submitBind() {
+      var input = document.getElementById("bindCodeInput");
+      var btn = document.getElementById("bindSubmitBtn");
+      var errBox = document.getElementById("bindErrorMsg");
+      var code = input.value.trim();
+
+      if (!code) {
+        errBox.textContent = "請輸入代碼";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "綁定中...";
+      errBox.textContent = "";
+
+      var url = GAS_API_URL + "?action=bindAgent&userId=" + encodeURIComponent(currentUserId) + "&code=" + encodeURIComponent(code);
+
+      fetch(url)
+        .then(function(res) { return res.json(); })
+        .then(function(result) {
+          if (result && result.success) {
+            loadBadges(); // 綁定成功，直接載入徽章
+          } else {
+            btn.disabled = false;
+            btn.textContent = "完成綁定";
+            errBox.textContent = (result && result.error) || "綁定失敗，請再試一次";
+          }
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = "完成綁定";
+          errBox.textContent = "系統錯誤，請稍後再試";
+        });
+    }
+
+    function renderBadges(result) {
+      if (!result) {
+        renderState("⚠️", "查詢失敗，請稍後再試");
+        return;
+      }
+
+      if (result.needBind) {
+        renderBindForm();
+        return;
+      }
+
+      if (!result.success) {
+        renderState("🔒", result.error || "查詢失敗，請稍後再試");
+        return;
+      }
+
+      var badges = result.badges || [];
+
+      if (result.agentName) {
+        document.getElementById("agentName").textContent = "探員：" + result.agentName;
+      }
+
+      if (badges.length === 0) {
+        renderState("📭", "目前尚未設定任何徽章");
+        return;
+      }
+
+      var unlockedCount = badges.filter(function(b){ return b.isUnlocked; }).length;
+      var total = badges.length;
+      var percent = total > 0 ? Math.round((unlockedCount / total) * 100) : 0;
+
+      document.getElementById("progressWrap").style.display = "block";
+      document.getElementById("progressText").textContent = unlockedCount + " / " + total;
+      document.getElementById("progressFill").style.width = percent + "%";
+
+      var html = '<div class="grid">';
+      badges.forEach(function(badge) {
+        var lockedClass = badge.isUnlocked ? "" : " locked";
+        var imgHtml = badge.isUnlocked && badge.imageId
+          ? '<img src="' + driveThumb(badge.imageId) + '" alt="' + escapeHtml(badge.name) + '">'
+          : '<span class="lock-icon">🔒</span>';
+
+        html +=
+          '<div class="badge-card' + lockedClass + '">' +
+            (badge.isUnlocked ? '<span class="badge-check">✓</span>' : '') +
+            '<div class="badge-img-wrap">' + imgHtml + '</div>' +
+            '<div class="badge-name">' + escapeHtml(badge.name) + '</div>' +
+            '<div class="badge-desc">' + escapeHtml(badge.desc) + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+
+      document.getElementById("content").innerHTML = html;
+    }
+
+    function loadBadges() {
+      var url = GAS_API_URL + "?action=getBadgeData&userId=" + encodeURIComponent(currentUserId);
+
+      fetch(url)
+        .then(function(res) { return res.json(); })
+        .then(function(result) {
+          renderBadges(result);
+        })
+        .catch(function(err) {
+          renderState("⚠️", "系統發生錯誤：" + (err && err.message ? err.message : "請稍後再試"));
+        });
+    }
+
+    function showDebugStatus(text) {
+      var grid = document.querySelector('.grid');
+      if (grid) {
+        var note = document.createElement('div');
+        note.style.cssText = 'grid-column:1/-1;text-align:center;font-size:11px;color:#8a8aa3;';
+        note.textContent = text;
+        grid.parentNode.insertBefore(note, grid);
+      }
+    }
+
+    async function main() {
+      showDebugStatus("① 頁面 JS 已啟動...");
+
+      if (typeof liff === "undefined") {
+        renderState("❌", "LIFF SDK 沒有載入成功（liff 未定義），請檢查網路連線，或確認 index.html 開頭有正確引入 SDK");
+        return;
+      }
+      showDebugStatus("② LIFF SDK 已載入，準備初始化...");
+
+      try {
+        var initPromise = liff.init({ liffId: "2010589127-kYBUGjqI" });
+        var timeoutPromise = new Promise(function(_, reject) {
+          setTimeout(function() { reject(new Error("TIMEOUT_INIT")); }, 8000);
+        });
+        await Promise.race([initPromise, timeoutPromise]);
+        showDebugStatus("③ liff.init 完成...");
+
+        if (!liff.isLoggedIn()) {
+          showDebugStatus("④ 尚未登入，導向登入頁...");
+          liff.login();
+          return;
+        }
+        showDebugStatus("④ 已登入，準備取得個人資料...");
+
+        var profile = await liff.getProfile();
+        currentUserId = profile.userId;
+        showDebugStatus("⑤ 已取得 userId，呼叫後端...");
+
+        loadBadges();
+      } catch (err) {
+        if (err && err.message === "TIMEOUT_INIT") {
+          renderState("⏱️", "liff.init() 逾時（8秒內未回應）。請檢查 LINE Developers Console 裡 LIFF App 的 Endpoint URL，是否與目前部署網址完全一致（含結尾 /exec，不要有多餘斜線或舊版部署ID）。");
+        } else {
+          renderState("⚠️", "LIFF 初始化失敗：" + (err && err.message ? err.message : JSON.stringify(err)));
+        }
+      }
+    }
+
+    main();
+  </script>
+
+</body>
+</html>
