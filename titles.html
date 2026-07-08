@@ -288,7 +288,7 @@
     });
 
     // ⚠️ 請填入你的 Apps Script 部署網址（.../exec 結尾），跟徽章功能共用同一個
-    var GAS_API_URL = "https://script.google.com/macros/s/AKfycbwf-U21bchsoQiKIcj-_rb_bqwhQfV1Hb3LVKSDRKipRLKNy0uSrV7u_J9r3R7nGfOEaA/exec";
+    var GAS_API_URL = "https://script.google.com/macros/s/AKfycby8tMXTgVeXrxcz3ren-9s-DheAujqGTWg6x4JEU6oiCoVYitfpBJZ5e0cnlv14iY4TjQ/exec";
 
     var jsonpCounter = 0;
     function jsonpRequest(url) {
@@ -464,7 +464,7 @@
       }
 
       try {
-        var initPromise = liff.init({ liffId: "2010589127-hbwO1HNJ" });
+        var initPromise = liff.init({ liffId: "請填入稱號用的LIFF ID" });
         var timeoutPromise = new Promise(function(_, reject) {
           setTimeout(function() { reject(new Error("TIMEOUT_INIT")); }, 8000);
         });
