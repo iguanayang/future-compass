@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root {
+      --bg: #14141f;
+      --panel: #1a1a2e;
+      --border: #2d2d44;
+      --cyan: #00ffff;
+      --gold: #ffde59;
+      --text: #ffffff;
+      --text-dim: #8a8aa3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 50% 0%, #1c1c30 0%, var(--bg) 60%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      padding: 32px 20px 20px;
+    }
+
+    .header .icon {
+      font-size: 40px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .header .agent-name {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--cyan);
+    }
+
+    .header .subtitle {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .progress-wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 20px 8px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      border-radius: 999px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--gold));
+      border-radius: 999px;
+      transition: width 0.6s ease;
+      width: 0%;
+    }
+
+    .grid {
+      max-width: 480px;
+      margin: 24px auto 60px;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .title-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 12px 14px;
+      text-align: center;
+      position: relative;
+    }
+
+    /* 未解鎖也維持清楚可讀，重點是讓使用者看得懂達成條件，不做太暗的遮蔽 */
+    .title-card.locked {
+      background: #1c1c2e;
+      opacity: 0.9;
+    }
+
+    .title-icon-wrap {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 10px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--cyan);
+      font-size: 28px;
+      background: #0f0f1c;
+    }
+
+    .title-card.locked .title-icon-wrap {
+      border-color: var(--border);
+    }
+
+    .title-name {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .title-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .title-card.locked .title-desc {
+      color: #a8a8c0;
+    }
+
+    .title-check {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 14px;
+      color: var(--gold);
+    }
+
+    .title-displaying-tag {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+
+    .state-box {
+      max-width: 480px;
+      margin: 60px auto;
+      padding: 0 32px;
+      text-align: center;
+    }
+
+    .state-box .emoji { font-size: 40px; display: block; margin-bottom: 14px; }
+
+    .state-box p {
+      color: var(--text-dim);
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .bind-box {
+      max-width: 360px;
+      margin: 50px auto;
+      padding: 0 24px;
+      text-align: center;
+    }
+
+    .bind-box .emoji { font-size: 44px; display: block; margin-bottom: 16px; }
+    .bind-box h2 { font-size: 17px; margin: 0 0 8px; }
+    .bind-box p {
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 0 0 20px;
+    }
+
+    .bind-box input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 15px;
+      text-align: center;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .bind-box input:focus { outline: none; border-color: var(--cyan); }
+
+    .bind-box button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(90deg, var(--cyan), #4dd0e1);
+      color: #0f0f1c;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .bind-box button:disabled { opacity: 0.5; }
+
+    .bind-error {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 10px;
+      min-height: 16px;
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--panel) 25%, #23233a 37%, var(--panel) 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+      border-radius: 16px;
+      height: 132px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span class="icon">🎖️</span>
+    <h1>稱號手冊</h1>
+    <div class="agent-name" id="agentName"></div>
+    <div class="subtitle">看看還有哪些稱號可以挑戰！</div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap" style="display:none;">
+    <div class="progress-label">
+      <span>已解鎖</span>
+      <span id="progressText">0 / 0</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="grid">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  </div>
+
+  <script>
+    window.onerror = function(msg, url, line, col, error) {
+      document.getElementById("content").innerHTML =
+        '<div class="state-box"><span class="emoji">❌</span>' +
+        '<p style="text-align:left;word-break:break-all;">JS 錯誤：' + msg +
+        '<br>位置：第 ' + line + ' 行</p></div>';
+      return true;
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      document.getElementById("content").innerHTML =
+        '<div class="state-box"><span class="emoji">❌</span>' +
+        '<p style="text-align:left;word-break:break-all;">未攔截的 Promise 錯誤：' +
+        (event.reason && event.reason.message ? event.reason.message : JSON.stringify(event.reason)) +
+        '</p></div>';
+    });
+
+    // ⚠️ 請填入你的 Apps Script 部署網址（.../exec 結尾），跟徽章功能共用同一個
+    var GAS_API_URL = "https://script.google.com/macros/s/AKfycby8tMXTgVeXrxcz3ren-9s-DheAujqGTWg6x4JEU6oiCoVYitfpBJZ5e0cnlv14iY4TjQ/exec";
+
+    var jsonpCounter = 0;
+    function jsonpRequest(url) {
+      return new Promise(function(resolve, reject) {
+        var callbackName = "jsonpCallback_" + (jsonpCounter++) + "_" + Date.now();
+        var script = document.createElement("script");
+        var timeoutId = setTimeout(function() {
+          cleanup();
+          reject(new Error("請求逾時，請檢查網路連線"));
+        }, 10000);
+
+        function cleanup() {
+          clearTimeout(timeoutId);
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[callbackName] = function(data) {
+          cleanup();
+          resolve(data);
+        };
+
+        script.onerror = function() {
+          cleanup();
+          reject(new Error("無法連線到伺服器"));
+        };
+
+        script.src = url + (url.indexOf("?") === -1 ? "?" : "&") + "callback=" + callbackName;
+        document.head.appendChild(script);
+      });
+    }
+
+    var currentUserId = null;
+
+    function escapeHtml(str) {
+      var div = document.createElement("div");
+      div.textContent = str || "";
+      return div.innerHTML;
+    }
+
+    function renderState(emoji, message) {
+      document.getElementById("progressWrap").style.display = "none";
+      document.getElementById("content").innerHTML =
+        '<div class="state-box">' +
+          '<span class="emoji">' + emoji + '</span>' +
+          '<p>' + escapeHtml(message) + '</p>' +
+        '</div>';
+    }
+
+    // 稱號功能跟徽章共用同一組綁定資料（LINE User ID），沒綁過的話這裡也能完成綁定
+    function renderBindForm(errorMsg) {
+      document.getElementById("progressWrap").style.display = "none";
+      document.getElementById("content").innerHTML =
+        '<div class="bind-box">' +
+          '<span class="emoji">🔑</span>' +
+          '<h2>第一次使用，請先綁定身份</h2>' +
+          '<p>輸入你的探員專屬代碼完成綁定，之後開啟徽章或稱號頁面都會自動辨識，不需要再輸入</p>' +
+          '<input type="text" id="bindCodeInput" placeholder="請輸入代碼" autocapitalize="off" autocorrect="off">' +
+          '<button id="bindSubmitBtn">完成綁定</button>' +
+          '<div class="bind-error" id="bindErrorMsg">' + (errorMsg ? escapeHtml(errorMsg) : '') + '</div>' +
+        '</div>';
+
+      document.getElementById("bindSubmitBtn").addEventListener("click", submitBind);
+      document.getElementById("bindCodeInput").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") submitBind();
+      });
+    }
+
+    function submitBind() {
+      var input = document.getElementById("bindCodeInput");
+      var btn = document.getElementById("bindSubmitBtn");
+      var errBox = document.getElementById("bindErrorMsg");
+      var code = input.value.trim();
+
+      if (!code) {
+        errBox.textContent = "請輸入代碼";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "綁定中...";
+      errBox.textContent = "";
+
+      var url = GAS_API_URL + "?action=bindAgent&userId=" + encodeURIComponent(currentUserId) + "&code=" + encodeURIComponent(code);
+
+      jsonpRequest(url)
+        .then(function(result) {
+          if (result && result.success) {
+            loadTitles();
+          } else {
+            btn.disabled = false;
+            btn.textContent = "完成綁定";
+            errBox.textContent = (result && result.error) || "綁定失敗，請再試一次";
+          }
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = "完成綁定";
+          errBox.textContent = "系統錯誤，請稍後再試";
+        });
+    }
+
+    function renderTitles(result) {
+      if (!result) {
+        renderState("⚠️", "查詢失敗，請稍後再試");
+        return;
+      }
+
+      if (result.needBind) {
+        renderBindForm();
+        return;
+      }
+
+      if (!result.success) {
+        renderState("🔒", result.error || "查詢失敗，請稍後再試");
+        return;
+      }
+
+      var titles = result.titles || [];
+
+      if (result.agentName) {
+        document.getElementById("agentName").textContent = "探員：" + result.agentName;
+      }
+
+      if (titles.length === 0) {
+        renderState("📭", "目前尚未設定任何稱號");
+        return;
+      }
+
+      var unlockedCount = titles.filter(function(t){ return t.isUnlocked; }).length;
+      var total = titles.length;
+      var percent = total > 0 ? Math.round((unlockedCount / total) * 100) : 0;
+
+      document.getElementById("progressWrap").style.display = "block";
+      document.getElementById("progressText").textContent = unlockedCount + " / " + total;
+      document.getElementById("progressFill").style.width = percent + "%";
+
+      var html = '<div class="grid">';
+      titles.forEach(function(title) {
+        var lockedClass = title.isUnlocked ? "" : " locked";
+        var icon = title.isUnlocked ? "🎖️" : "🔓";
+
+        html +=
+          '<div class="title-card' + lockedClass + '">' +
+            (title.isUnlocked ? '<span class="title-check">✓</span>' : '') +
+            '<div class="title-icon-wrap">' + icon + '</div>' +
+            '<div class="title-name">' + escapeHtml(title.name) + '</div>' +
+            '<div class="title-desc">' + escapeHtml(title.desc) + '</div>' +
+            (title.isDisplaying ? '<span class="title-displaying-tag">目前顯示中</span>' : '') +
+          '</div>';
+      });
+      html += '</div>';
+
+      document.getElementById("content").innerHTML = html;
+    }
+
+    function loadTitles() {
+      var url = GAS_API_URL + "?action=getTitleData&userId=" + encodeURIComponent(currentUserId);
+
+      jsonpRequest(url)
+        .then(function(result) {
+          renderTitles(result);
+        })
+        .catch(function(err) {
+          renderState("⚠️", "系統發生錯誤：" + (err && err.message ? err.message : "請稍後再試"));
+        });
+    }
+
+    async function main() {
+      if (typeof liff === "undefined") {
+        renderState("❌", "LIFF SDK 沒有載入成功，請檢查網路連線");
+        return;
+      }
+
+      try {
+        var initPromise = liff.init({ liffId: "請填入稱號用的LIFF ID" });
+        var timeoutPromise = new Promise(function(_, reject) {
+          setTimeout(function() { reject(new Error("TIMEOUT_INIT")); }, 8000);
+        });
+        await Promise.race([initPromise, timeoutPromise]);
+
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        var profile = await liff.getProfile();
+        currentUserId = profile.userId;
+
+        loadTitles();
+      } catch (err) {
+        if (err && err.message === "TIMEOUT_INIT") {
+          renderState("⏱️", "liff.init() 逾時，請檢查 LIFF App 的 Endpoint URL 設定。");
+        } else {
+          renderState("⚠️", "LIFF 初始化失敗：" + (err && err.message ? err.message : JSON.stringify(err)));
+        }
+      }
+    }
+
+    main();
+  </script>
+
+</body>
+</html>
