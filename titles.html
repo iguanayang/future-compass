@@ -137,6 +137,7 @@
       font-size: 11px;
       color: var(--text-dim);
       line-height: 1.6;
+      white-space: pre-line;
     }
 
     .title-card.locked .title-desc {
@@ -329,6 +330,11 @@
       return div.innerHTML;
     }
 
+    // 把文字裡的換行符號轉成 <br>，讓試算表裡用 Alt+Enter 換行的內容能正確顯示
+    function nl2br(str) {
+      return escapeHtml(str).replace(/\r\n|\r|\n/g, "<br>");
+    }
+
     function renderState(emoji, message) {
       document.getElementById("progressWrap").style.display = "none";
       document.getElementById("content").innerHTML =
@@ -436,7 +442,7 @@
             (title.isUnlocked ? '<span class="title-check">✓</span>' : '') +
             '<div class="title-icon-wrap">' + icon + '</div>' +
             '<div class="title-name">' + escapeHtml(title.name) + '</div>' +
-            '<div class="title-desc">' + escapeHtml(title.desc) + '</div>' +
+            '<div class="title-desc">' + nl2br(title.desc) + '</div>' +
             (title.isDisplaying ? '<span class="title-displaying-tag">目前顯示中</span>' : '') +
           '</div>';
       });
@@ -464,7 +470,7 @@
       }
 
       try {
-        var initPromise = liff.init({ liffId: "2010589127-hbwO1HNJ" });
+        var initPromise = liff.init({ liffId: "請填入稱號用的LIFF ID" });
         var timeoutPromise = new Promise(function(_, reject) {
           setTimeout(function() { reject(new Error("TIMEOUT_INIT")); }, 8000);
         });
