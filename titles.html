@@ -140,6 +140,19 @@
       white-space: pre-line;
     }
 
+    .title-quote {
+      display: block;
+      font-style: italic;
+      color: var(--gold);
+      font-size: 11.5px;
+      margin-bottom: 4px;
+    }
+
+    .title-condition {
+      display: block;
+      color: var(--text-dim);
+    }
+
     .title-card.locked .title-desc {
       color: #a8a8c0;
     }
@@ -324,6 +337,19 @@
 
     var currentUserId = null;
 
+    // 把「"名言" 說明文字」自動拆成兩行：名言一行（斜體強調）、說明文字一行
+    function formatTitleDesc(desc) {
+      var text = desc || "";
+      var match = text.match(/^[「"](.+?)[」"]\s*(.*)$/);
+      if (match) {
+        var quote = match[1].trim();
+        var rest = match[2].trim();
+        return '<span class="title-quote">「' + escapeHtml(quote) + '」</span>' +
+               (rest ? '<span class="title-condition">' + escapeHtml(rest) + '</span>' : '');
+      }
+      return escapeHtml(text);
+    }
+
     function escapeHtml(str) {
       var div = document.createElement("div");
       div.textContent = str || "";
@@ -442,7 +468,7 @@
             (title.isUnlocked ? '<span class="title-check">✓</span>' : '') +
             '<div class="title-icon-wrap">' + icon + '</div>' +
             '<div class="title-name">' + escapeHtml(title.name) + '</div>' +
-            '<div class="title-desc">' + nl2br(title.desc) + '</div>' +
+            '<div class="title-desc">' + formatTitleDesc(title.desc) + '</div>' +
             (title.isDisplaying ? '<span class="title-displaying-tag">目前顯示中</span>' : '') +
           '</div>';
       });
