@@ -352,7 +352,7 @@
       // 職業星座：6個星系各自聚落，排成 2 排 x 3 欄
       var careerStars = stars.filter(function(s) { return s.constellation === "職業"; });
       var systems = [];
-      careerStars.forEach(function(s) { if (systems.indexOf(s.system) === -1) systems.push(s.system); });
+      careerStars.forEach(function(s) { if (s.system && systems.indexOf(s.system) === -1) systems.push(s.system); });
       var careerTop = 280;
       var cols = 3, rowGap = 120, colGap = 115;
       systems.forEach(function(sys, si) {
@@ -529,7 +529,7 @@
       var lifeUnlocked = lifeStars.filter(function(s){return s.isUnlocked;}).length;
 
       var systems = [];
-      careerStars.forEach(function(s) { if (systems.indexOf(s.system) === -1) systems.push(s.system); });
+      careerStars.forEach(function(s) { if (s.system && systems.indexOf(s.system) === -1) systems.push(s.system); });
 
       var html = "";
 
