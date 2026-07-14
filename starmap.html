@@ -255,6 +255,20 @@
         '<div class="state-box"><span class="emoji">❌</span><p style="text-align:left;word-break:break-all;">JS 錯誤：' + msg + '（第 ' + line + ' 行）</p></div>';
       return true;
     };
+    window.addEventListener('unhandledrejection', function(event) {
+      document.getElementById("canvasWrap").innerHTML =
+        '<div class="state-box"><span class="emoji">❌</span><p style="text-align:left;word-break:break-all;">未攔截的 Promise 錯誤：' +
+        (event.reason && event.reason.message ? event.reason.message : JSON.stringify(event.reason)) +
+        '</p></div>';
+    });
+
+    function showDebugStatus(text) {
+      var wrap = document.getElementById("canvasWrap");
+      var note = document.createElement("div");
+      note.style.cssText = "text-align:center;font-size:11px;color:var(--text-dim);padding:6px 0;";
+      note.textContent = text;
+      wrap.appendChild(note);
+    }
 
     function escapeHtml(str) {
       var div = document.createElement("div");
@@ -497,6 +511,8 @@
       svg += '</svg>';
       return svg;
     }
+
+    function starRatingText(unlocked, total) {
       var filled = total > 0 ? Math.round((unlocked / total) * 5) : 0;
       var str = "";
       for (var i = 0; i < 5; i++) str += (i < filled ? "★" : "☆");
@@ -575,16 +591,24 @@
     }
 
     async function main() {
+      showDebugStatus("① 頁面 JS 已啟動...");
+
       if (typeof liff === "undefined") { renderState("❌", "LIFF SDK 沒有載入成功，請檢查網路連線"); return; }
+      showDebugStatus("② LIFF SDK 已載入...");
+
       try {
         var initPromise = liff.init({ liffId: "2010589127-krFASVpK" });
         var timeoutPromise = new Promise(function(_, reject) { setTimeout(function() { reject(new Error("TIMEOUT_INIT")); }, 8000); });
         await Promise.race([initPromise, timeoutPromise]);
+        showDebugStatus("③ liff.init 完成...");
 
-        if (!liff.isLoggedIn()) { liff.login(); return; }
+        if (!liff.isLoggedIn()) { showDebugStatus("④ 導向登入..."); liff.login(); return; }
+        showDebugStatus("④ 已登入，取得個人資料...");
 
         var profile = await liff.getProfile();
         currentUserId = profile.userId;
+        showDebugStatus("⑤ 已取得 userId，呼叫後端...");
+
         loadStarMap();
       } catch (err) {
         if (err && err.message === "TIMEOUT_INIT") {
