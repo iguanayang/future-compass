@@ -83,19 +83,15 @@
     .recent-banner .label { font-size: 11px; color: var(--gold); margin: 0 0 3px; }
     .recent-banner .value { font-size: 14px; font-weight: 700; margin: 0; }
 
-    .trajectory {
+    .trajectory-wrap {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      overflow-x: auto;
     }
 
-    .traj-dot { flex-shrink: 0; font-size: 12px; }
-    .traj-line { flex: 1; min-width: 12px; height: 1px; background: var(--border); }
+    .traj-svg { width: 100%; height: auto; display: block; }
+    .traj-star { cursor: pointer; }
 
     .progress-card {
       background: var(--panel);
@@ -343,11 +339,11 @@
       var careerStars = stars.filter(function(s) { return s.constellation === "職業"; });
       var systems = [];
       careerStars.forEach(function(s) { if (systems.indexOf(s.system) === -1) systems.push(s.system); });
-      var careerTop = 210;
-      var cols = 3, rowGap = 100, colGap = 120;
+      var careerTop = 280;
+      var cols = 3, rowGap = 120, colGap = 115;
       systems.forEach(function(sys, si) {
         var col = si % cols, row = Math.floor(si / cols);
-        var cx = 70 + col * colGap;
+        var cx = 95 + col * colGap;
         var cy = careerTop + row * rowGap;
         var starsInSys = careerStars.filter(function(s) { return s.system === sys; });
         starsInSys.forEach(function(s, i) {
@@ -362,7 +358,7 @@
 
       // 生活星座：小群聚在底部
       var lifeStars = stars.filter(function(s) { return s.constellation === "生活"; });
-      var lifeCenterX = VW / 2, lifeCenterY = careerTop + 2 * rowGap + 40;
+      var lifeCenterX = VW / 2, lifeCenterY = careerTop + 2 * rowGap + 55;
       lifeStars.forEach(function(s, i) {
         var angle = (Math.PI * 2 / lifeStars.length) * i - Math.PI / 2;
         positions[s.id] = {
@@ -372,8 +368,14 @@
         };
       });
 
-      var totalHeight = lifeCenterY + 60;
-      return { positions: positions, height: totalHeight, selfCenter: {x: selfCenterX, y: selfCenterY}, outer: outer, terminal: terminal };
+      var totalHeight = lifeCenterY + 70;
+      return {
+        positions: positions, height: totalHeight,
+        selfCenter: {x: selfCenterX, y: selfCenterY}, outer: outer, terminal: terminal,
+        selfLabelY: selfCenterY - selfR - 30,
+        careerLabelY: careerTop - 60,
+        lifeLabelY: lifeCenterY - 55
+      };
     }
 
     function renderStarMap(result) {
@@ -391,9 +393,9 @@
       // ---- 畫布 SVG ----
       var svg = '<svg class="star-svg" viewBox="0 0 400 ' + layout.height + '" xmlns="http://www.w3.org/2000/svg">';
 
-      svg += '<text x="20" y="20" class="zone-label">🧭 自我星座</text>';
-      svg += '<text x="20" y="205" class="zone-label">🌎 職業星座</text>';
-      svg += '<text x="20" y="' + (layout.height - 55) + '" class="zone-label">🤖 生活星座</text>';
+      svg += '<text x="20" y="' + layout.selfLabelY + '" class="zone-label">🧭 自我星座</text>';
+      svg += '<text x="20" y="' + layout.careerLabelY + '" class="zone-label">🌎 職業星座</text>';
+      svg += '<text x="20" y="' + layout.lifeLabelY + '" class="zone-label">🤖 生活星座</text>';
 
       // 自我星座連線（外圍指向終點星）
       if (layout.terminal) {
@@ -430,6 +432,13 @@
       });
 
       renderSections(stars, result);
+
+      document.querySelectorAll(".traj-star").forEach(function(el) {
+        el.addEventListener("click", function() {
+          var star = stars.find(function(s) { return s.id === el.getAttribute("data-id"); });
+          if (star) showStarModal(star);
+        });
+      });
     }
 
     function showStarModal(star) {
@@ -454,7 +463,40 @@
       if (e.target === this) closeModal();
     });
 
-    function starRatingText(unlocked, total) {
+    function buildTrajectorySVG(stars) {
+      var cols = 8, spacingX = 42, spacingY = 40, padding = 20;
+      var rows = Math.ceil(stars.length / cols);
+      var w = padding * 2 + (cols - 1) * spacingX;
+      var h = padding * 2 + (rows - 1) * spacingY;
+
+      var pts = stars.map(function(s, i) {
+        var row = Math.floor(i / cols);
+        var colInRow = i % cols;
+        var col = (row % 2 === 0) ? colInRow : (cols - 1 - colInRow); // 蛇形：偶數排左到右，奇數排右到左
+        return { x: padding + col * spacingX, y: padding + row * spacingY, star: s };
+      });
+
+      var svg = '<svg class="traj-svg" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+
+      // 連線（依序連接，已點亮段落較亮）
+      for (var i = 0; i < pts.length - 1; i++) {
+        var a = pts[i], b = pts[i + 1];
+        var bothUnlocked = a.star.isUnlocked && b.star.isUnlocked;
+        svg += '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y +
+          '" stroke="' + (bothUnlocked ? "var(--gold)" : "var(--border)") + '" stroke-width="1" opacity="' + (bothUnlocked ? "0.7" : "0.4") + '"/>';
+      }
+
+      pts.forEach(function(p) {
+        var s = p.star;
+        var fill = s.isUnlocked ? "var(--gold)" : "#2a2f5c";
+        var r = s.isUnlocked ? 5 : 4;
+        svg += '<circle class="traj-star" data-id="' + s.id + '" cx="' + p.x + '" cy="' + p.y + '" r="' + r + '" fill="' + fill + '"' +
+          (s.isUnlocked ? ' opacity="1"' : ' opacity="0.5" stroke="var(--border)" stroke-width="0.5"') + '/>';
+      });
+
+      svg += '</svg>';
+      return svg;
+    }
       var filled = total > 0 ? Math.round((unlocked / total) * 5) : 0;
       var str = "";
       for (var i = 0; i < 5; i++) str += (i < filled ? "★" : "☆");
@@ -485,14 +527,10 @@
         '</div></div>';
       }
 
-      // 成長軌跡
-      if (unlockedStars.length > 0) {
-        html += '<div class="section"><div class="section-title">成長軌跡</div><div class="trajectory">';
-        unlockedStars.forEach(function(s, i) {
-          html += '<span class="traj-dot">⭐</span>';
-          if (i < unlockedStars.length - 1) html += '<span class="traj-line"></span>';
-        });
-        html += '</div></div>';
+      // 成長軌跡：全部星星以蜿蜒排列的星軌呈現（自動換行，不受寬度限制），已點亮亮、未點亮暗
+      if (stars.length > 0) {
+        html += '<div class="section"><div class="section-title">成長軌跡（' + result.unlockedCount + ' / ' + result.totalCount + '）</div>' +
+          '<div class="trajectory-wrap">' + buildTrajectorySVG(stars) + '</div></div>';
       }
 
       // 完成度
