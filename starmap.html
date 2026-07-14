@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root {
+      --bg: #0a0e27;
+      --panel: #14183a;
+      --border: #2a2f5c;
+      --self-color: #4ade80;
+      --career-color: #818cf8;
+      --life-color: #38bdf8;
+      --gold: #ffde59;
+      --text: #ffffff;
+      --text-dim: #9797c2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(ellipse at 50% 0%, #1a1f4a 0%, var(--bg) 55%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .header {
+      text-align: center;
+      padding: 28px 20px 14px;
+    }
+
+    .header .icon { font-size: 36px; display: block; margin-bottom: 4px; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+    .header .agent-name { margin-top: 4px; font-size: 13px; color: var(--career-color); }
+    .header .overall { margin-top: 6px; font-size: 12px; color: var(--text-dim); }
+
+    .canvas-wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 12px;
+    }
+
+    .star-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .star-dot { cursor: pointer; transition: r 0.2s ease; }
+    .star-dot:active { r: 12; }
+
+    .zone-label {
+      font-size: 10px;
+      fill: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .section {
+      max-width: 480px;
+      margin: 18px auto;
+      padding: 0 20px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .recent-banner {
+      background: linear-gradient(90deg, rgba(129,140,248,0.15), rgba(56,189,248,0.1));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+    }
+
+    .recent-banner .label { font-size: 11px; color: var(--gold); margin: 0 0 3px; }
+    .recent-banner .value { font-size: 14px; font-weight: 700; margin: 0; }
+
+    .trajectory {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    .traj-dot { flex-shrink: 0; font-size: 12px; }
+    .traj-line { flex: 1; min-width: 12px; height: 1px; background: var(--border); }
+
+    .progress-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .progress-row .name { font-size: 13px; font-weight: 600; }
+    .progress-row .count { font-size: 12px; color: var(--text-dim); }
+
+    .system-list {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+
+    .system-list.open { display: flex; flex-direction: column; gap: 5px; }
+
+    .system-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+    }
+
+    .system-row .stars { color: var(--text-dim); }
+
+    /* 詳情彈窗 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5,7,20,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px 20px;
+      max-width: 320px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .modal-card .star-icon { font-size: 32px; display: block; margin-bottom: 10px; }
+    .modal-card h3 { margin: 0 0 6px; font-size: 16px; }
+    .modal-card .system-tag {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+    .modal-card .quote {
+      font-size: 12.5px;
+      color: var(--gold);
+      font-style: italic;
+      line-height: 1.6;
+      margin: 0 0 12px;
+    }
+    .modal-card .badge-note {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+    .modal-card button {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 20px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .state-box { max-width: 480px; margin: 60px auto; padding: 0 32px; text-align: center; }
+    .state-box .emoji { font-size: 40px; display: block; margin-bottom: 14px; }
+    .state-box p { color: var(--text-dim); font-size: 14px; line-height: 1.7; margin: 0; }
+
+    .bind-box { max-width: 360px; margin: 50px auto; padding: 0 24px; text-align: center; }
+    .bind-box .emoji { font-size: 44px; display: block; margin-bottom: 16px; }
+    .bind-box h2 { font-size: 17px; margin: 0 0 8px; }
+    .bind-box p { color: var(--text-dim); font-size: 13px; line-height: 1.6; margin: 0 0 20px; }
+    .bind-box input {
+      width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--panel); color: var(--text); font-size: 15px; text-align: center;
+      margin-bottom: 12px; letter-spacing: 1px;
+    }
+    .bind-box input:focus { outline: none; border-color: var(--career-color); }
+    .bind-box button {
+      width: 100%; padding: 14px; border-radius: 12px; border: none;
+      background: linear-gradient(90deg, var(--career-color), var(--life-color));
+      color: #0a0e27; font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+    .bind-box button:disabled { opacity: 0.5; }
+    .bind-error { color: #ff6b6b; font-size: 12px; margin-top: 10px; min-height: 16px; }
+
+    .skeleton {
+      max-width: 480px; margin: 40px auto; height: 280px; border-radius: 16px;
+      background: linear-gradient(90deg, var(--panel) 25%, #1e2350 37%, var(--panel) 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span class="icon">🌌</span>
+    <h1>我的星圖</h1>
+    <div class="agent-name" id="agentName"></div>
+    <div class="overall" id="overallText"></div>
+  </div>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="skeleton"></div>
+  </div>
+
+  <div id="sections"></div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card" id="modalCard"></div>
+  </div>
+
+  <script>
+    var currentUserId = null;
+    var starData = null;
+
+    // ⚠️ 請填入你的 Apps Script 部署網址（.../exec 結尾）
+    var GAS_API_URL = "https://script.google.com/macros/s/AKfycbwEKM9ToJygUGGo5lMEX_-zK6QOsblhBSUN0HaHFLJF_C6eKcvQBqMKpP4DCUlygyA_Bw/exec";
+
+    var SYSTEM_COLOR = {
+      "餐飲服務": "#ff9d5c",
+      "媒體創意": "#c77dff",
+      "商業管理": "#5c9dff",
+      "健康保健": "#5cff9d",
+      "資訊科技": "#5cf0ff",
+      "教育公益": "#ffde59"
+    };
+
+    window.onerror = function(msg, url, line) {
+      document.getElementById("canvasWrap").innerHTML =
+        '<div class="state-box"><span class="emoji">❌</span><p style="text-align:left;word-break:break-all;">JS 錯誤：' + msg + '（第 ' + line + ' 行）</p></div>';
+      return true;
+    };
+
+    function escapeHtml(str) {
+      var div = document.createElement("div");
+      div.textContent = str || "";
+      return div.innerHTML;
+    }
+
+    var jsonpCounter = 0;
+    function jsonpRequest(url) {
+      return new Promise(function(resolve, reject) {
+        var callbackName = "jsonpCallback_" + (jsonpCounter++) + "_" + Date.now();
+        var script = document.createElement("script");
+        var timeoutId = setTimeout(function() { cleanup(); reject(new Error("請求逾時，請檢查網路連線")); }, 10000);
+        function cleanup() { clearTimeout(timeoutId); delete window[callbackName]; if (script.parentNode) script.parentNode.removeChild(script); }
+        window[callbackName] = function(data) { cleanup(); resolve(data); };
+        script.onerror = function() { cleanup(); reject(new Error("無法連線到伺服器")); };
+        script.src = url + (url.indexOf("?") === -1 ? "?" : "&") + "callback=" + callbackName;
+        document.head.appendChild(script);
+      });
+    }
+
+    function renderState(emoji, message) {
+      document.getElementById("canvasWrap").innerHTML =
+        '<div class="state-box"><span class="emoji">' + emoji + '</span><p>' + escapeHtml(message) + '</p></div>';
+      document.getElementById("sections").innerHTML = "";
+    }
+
+    function renderBindForm(errorMsg) {
+      document.getElementById("canvasWrap").innerHTML =
+        '<div class="bind-box">' +
+          '<span class="emoji">🔑</span>' +
+          '<h2>第一次使用，請先綁定身份</h2>' +
+          '<p>輸入你的探員專屬代碼完成綁定，之後開啟徽章、稱號或星圖頁面都會自動辨識，不需要再輸入</p>' +
+          '<input type="text" id="bindCodeInput" placeholder="請輸入代碼" autocapitalize="off" autocorrect="off">' +
+          '<button id="bindSubmitBtn">完成綁定</button>' +
+          '<div class="bind-error" id="bindErrorMsg">' + (errorMsg ? escapeHtml(errorMsg) : '') + '</div>' +
+        '</div>';
+      document.getElementById("sections").innerHTML = "";
+      document.getElementById("bindSubmitBtn").addEventListener("click", submitBind);
+      document.getElementById("bindCodeInput").addEventListener("keydown", function(e) { if (e.key === "Enter") submitBind(); });
+    }
+
+    function submitBind() {
+      var input = document.getElementById("bindCodeInput");
+      var btn = document.getElementById("bindSubmitBtn");
+      var errBox = document.getElementById("bindErrorMsg");
+      var code = input.value.trim();
+      if (!code) { errBox.textContent = "請輸入代碼"; return; }
+      btn.disabled = true; btn.textContent = "綁定中..."; errBox.textContent = "";
+      var url = GAS_API_URL + "?action=bindAgent&userId=" + encodeURIComponent(currentUserId) + "&code=" + encodeURIComponent(code);
+      jsonpRequest(url).then(function(result) {
+        if (result && result.success) { loadStarMap(); }
+        else { btn.disabled = false; btn.textContent = "完成綁定"; errBox.textContent = (result && result.error) || "綁定失敗，請再試一次"; }
+      }).catch(function() {
+        btn.disabled = false; btn.textContent = "完成綁定"; errBox.textContent = "系統錯誤，請稍後再試";
+      });
+    }
+
+    // ---- 星圖佈局計算 ----
+    function buildLayout(stars) {
+      var positions = {}; // starId -> {x, y, color}
+      var VW = 400;
+
+      // 自我星座：終點星置中，其餘外圍星環繞
+      var selfStars = stars.filter(function(s) { return s.constellation === "自我"; });
+      var terminal = selfStars.filter(function(s) { return s.isTerminal; })[0];
+      var outer = selfStars.filter(function(s) { return !s.isTerminal; });
+      var selfCenterX = VW / 2, selfCenterY = 90, selfR = 55;
+      outer.forEach(function(s, i) {
+        var angle = (Math.PI * 2 / outer.length) * i - Math.PI / 2;
+        positions[s.id] = {
+          x: selfCenterX + Math.cos(angle) * selfR,
+          y: selfCenterY + Math.sin(angle) * selfR * 0.75,
+          color: "var(--self-color)"
+        };
+      });
+      if (terminal) {
+        positions[terminal.id] = { x: selfCenterX, y: selfCenterY, color: "var(--gold)" };
+      }
+
+      // 職業星座：6個星系各自聚落，排成 2 排 x 3 欄
+      var careerStars = stars.filter(function(s) { return s.constellation === "職業"; });
+      var systems = [];
+      careerStars.forEach(function(s) { if (systems.indexOf(s.system) === -1) systems.push(s.system); });
+      var careerTop = 210;
+      var cols = 3, rowGap = 100, colGap = 120;
+      systems.forEach(function(sys, si) {
+        var col = si % cols, row = Math.floor(si / cols);
+        var cx = 70 + col * colGap;
+        var cy = careerTop + row * rowGap;
+        var starsInSys = careerStars.filter(function(s) { return s.system === sys; });
+        starsInSys.forEach(function(s, i) {
+          var angle = (Math.PI * 2 / starsInSys.length) * i - Math.PI / 2;
+          positions[s.id] = {
+            x: cx + Math.cos(angle) * 22,
+            y: cy + Math.sin(angle) * 18,
+            color: SYSTEM_COLOR[sys] || "var(--career-color)"
+          };
+        });
+      });
+
+      // 生活星座：小群聚在底部
+      var lifeStars = stars.filter(function(s) { return s.constellation === "生活"; });
+      var lifeCenterX = VW / 2, lifeCenterY = careerTop + 2 * rowGap + 40;
+      lifeStars.forEach(function(s, i) {
+        var angle = (Math.PI * 2 / lifeStars.length) * i - Math.PI / 2;
+        positions[s.id] = {
+          x: lifeCenterX + Math.cos(angle) * 32,
+          y: lifeCenterY + Math.sin(angle) * 28,
+          color: "var(--life-color)"
+        };
+      });
+
+      var totalHeight = lifeCenterY + 60;
+      return { positions: positions, height: totalHeight, selfCenter: {x: selfCenterX, y: selfCenterY}, outer: outer, terminal: terminal };
+    }
+
+    function renderStarMap(result) {
+      if (!result) { renderState("⚠️", "查詢失敗，請稍後再試"); return; }
+      if (result.needBind) { renderBindForm(); return; }
+      if (!result.success) { renderState("🔒", result.error || "查詢失敗，請稍後再試"); return; }
+
+      starData = result;
+      if (result.agentName) document.getElementById("agentName").textContent = "探員：" + result.agentName;
+      document.getElementById("overallText").textContent = "已點亮 " + result.unlockedCount + " / " + result.totalCount + " 顆星";
+
+      var stars = result.stars || [];
+      var layout = buildLayout(stars);
+
+      // ---- 畫布 SVG ----
+      var svg = '<svg class="star-svg" viewBox="0 0 400 ' + layout.height + '" xmlns="http://www.w3.org/2000/svg">';
+
+      svg += '<text x="20" y="20" class="zone-label">🧭 自我星座</text>';
+      svg += '<text x="20" y="205" class="zone-label">🌎 職業星座</text>';
+      svg += '<text x="20" y="' + (layout.height - 55) + '" class="zone-label">🤖 生活星座</text>';
+
+      // 自我星座連線（外圍指向終點星）
+      if (layout.terminal) {
+        layout.outer.forEach(function(s) {
+          var p1 = layout.positions[s.id], p2 = layout.positions[layout.terminal.id];
+          var op = (s.isUnlocked && layout.terminal.isUnlocked) ? "0.6" : "0.25";
+          svg += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y + '" stroke="var(--self-color)" stroke-width="1" stroke-dasharray="2 3" opacity="' + op + '"/>';
+        });
+      }
+
+      // 星星本體
+      stars.forEach(function(s) {
+        var pos = layout.positions[s.id];
+        if (!pos) return;
+        var isTerm = s.isTerminal;
+        var r = isTerm ? 10 : 7;
+        var fillColor = s.isUnlocked ? pos.color : "#3a3f6e";
+        var opacity = s.isUnlocked ? "1" : (isTerm ? "0.3" : "0.55");
+        svg += '<circle class="star-dot" data-id="' + s.id + '" cx="' + pos.x + '" cy="' + pos.y + '" r="' + r + '" fill="' + fillColor + '" opacity="' + opacity + '"' +
+          (isTerm ? ' style="filter:blur(' + (s.isUnlocked ? '0' : '0.6') + 'px)"' : '') + '/>';
+        if (s.isUnlocked) {
+          svg += '<circle cx="' + pos.x + '" cy="' + pos.y + '" r="' + (r + 4) + '" fill="none" stroke="' + pos.color + '" stroke-width="0.5" opacity="0.4"/>';
+        }
+      });
+
+      svg += '</svg>';
+      document.getElementById("canvasWrap").innerHTML = svg;
+
+      document.querySelectorAll(".star-dot").forEach(function(el) {
+        el.addEventListener("click", function() {
+          var star = stars.find(function(s) { return s.id === el.getAttribute("data-id"); });
+          if (star) showStarModal(star);
+        });
+      });
+
+      renderSections(stars, result);
+    }
+
+    function showStarModal(star) {
+      var html = '<span class="star-icon">' + (star.isUnlocked ? "✨" : "🔒") + '</span>';
+      html += '<h3>' + escapeHtml(star.name) + '</h3>';
+      if (star.system) html += '<div class="system-tag">' + escapeHtml(star.system) + '</div>';
+      if (star.isUnlocked) {
+        if (star.quote) html += '<p class="quote">「' + escapeHtml(star.quote) + '」</p>';
+        if (star.badgeId) html += '<div class="badge-note">🏅 對應徽章：' + escapeHtml(star.badgeId) + '</div>';
+      } else {
+        html += '<p class="quote" style="color:var(--text-dim);font-style:normal;">尚未點亮這顆星，繼續探索解鎖它吧！</p>';
+      }
+      html += '<button onclick="closeModal()">關閉</button>';
+      document.getElementById("modalCard").innerHTML = html;
+      document.getElementById("modalOverlay").classList.add("show");
+    }
+
+    function closeModal() {
+      document.getElementById("modalOverlay").classList.remove("show");
+    }
+    document.getElementById("modalOverlay").addEventListener("click", function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    function starRatingText(unlocked, total) {
+      var filled = total > 0 ? Math.round((unlocked / total) * 5) : 0;
+      var str = "";
+      for (var i = 0; i < 5; i++) str += (i < filled ? "★" : "☆");
+      return str;
+    }
+
+    function renderSections(stars, result) {
+      var selfStars = stars.filter(function(s) { return s.constellation === "自我"; });
+      var careerStars = stars.filter(function(s) { return s.constellation === "職業"; });
+      var lifeStars = stars.filter(function(s) { return s.constellation === "生活"; });
+
+      var selfUnlocked = selfStars.filter(function(s){return s.isUnlocked;}).length;
+      var careerUnlocked = careerStars.filter(function(s){return s.isUnlocked;}).length;
+      var lifeUnlocked = lifeStars.filter(function(s){return s.isUnlocked;}).length;
+
+      var systems = [];
+      careerStars.forEach(function(s) { if (systems.indexOf(s.system) === -1) systems.push(s.system); });
+
+      var html = "";
+
+      // 最近點亮：取已解鎖清單中最後一個（假設 sheet 記錄順序即為解鎖順序）
+      var unlockedStars = stars.filter(function(s) { return s.isUnlocked; });
+      if (unlockedStars.length > 0) {
+        var recent = unlockedStars[unlockedStars.length - 1];
+        html += '<div class="section"><div class="recent-banner">' +
+          '<p class="label">✨ 最近點亮</p>' +
+          '<p class="value">' + escapeHtml(recent.name) + '</p>' +
+        '</div></div>';
+      }
+
+      // 成長軌跡
+      if (unlockedStars.length > 0) {
+        html += '<div class="section"><div class="section-title">成長軌跡</div><div class="trajectory">';
+        unlockedStars.forEach(function(s, i) {
+          html += '<span class="traj-dot">⭐</span>';
+          if (i < unlockedStars.length - 1) html += '<span class="traj-line"></span>';
+        });
+        html += '</div></div>';
+      }
+
+      // 完成度
+      html += '<div class="section"><div class="section-title">完成度</div>';
+
+      html += '<div class="progress-card"><div class="progress-row">' +
+        '<span class="name">🧭 自我星座</span>' +
+        '<span class="count">' + starRatingText(selfUnlocked, selfStars.length) + ' (' + selfUnlocked + '/' + selfStars.length + ')</span>' +
+      '</div></div>';
+
+      html += '<div class="progress-card"><div class="progress-row" onclick="toggleSystemList()">' +
+        '<span class="name">🌎 職業星座</span>' +
+        '<span class="count">' + careerUnlocked + ' / ' + careerStars.length + ' ▾</span>' +
+      '</div><div class="system-list" id="systemList">';
+      systems.forEach(function(sys) {
+        var sysStars = careerStars.filter(function(s) { return s.system === sys; });
+        var sysUnlocked = sysStars.filter(function(s) { return s.isUnlocked; }).length;
+        html += '<div class="system-row"><span style="color:' + (SYSTEM_COLOR[sys] || "#fff") + '">' + escapeHtml(sys) + '</span>' +
+          '<span class="stars">' + starRatingText(sysUnlocked, sysStars.length) + '</span></div>';
+      });
+      html += '</div></div>';
+
+      html += '<div class="progress-card"><div class="progress-row">' +
+        '<span class="name">🤖 生活星座</span>' +
+        '<span class="count">' + starRatingText(lifeUnlocked, lifeStars.length) + ' (' + lifeUnlocked + '/' + lifeStars.length + ')</span>' +
+      '</div></div>';
+
+      html += '</div>';
+
+      document.getElementById("sections").innerHTML = html;
+    }
+
+    function toggleSystemList() {
+      document.getElementById("systemList").classList.toggle("open");
+    }
+
+    function loadStarMap() {
+      var url = GAS_API_URL + "?action=getStarMapData&userId=" + encodeURIComponent(currentUserId);
+      jsonpRequest(url).then(renderStarMap).catch(function(err) {
+        renderState("⚠️", "系統發生錯誤：" + (err && err.message ? err.message : "請稍後再試"));
+      });
+    }
+
+    async function main() {
+      if (typeof liff === "undefined") { renderState("❌", "LIFF SDK 沒有載入成功，請檢查網路連線"); return; }
+      try {
+        var initPromise = liff.init({ liffId: "2010589127-krFASVpK" });
+        var timeoutPromise = new Promise(function(_, reject) { setTimeout(function() { reject(new Error("TIMEOUT_INIT")); }, 8000); });
+        await Promise.race([initPromise, timeoutPromise]);
+
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+
+        var profile = await liff.getProfile();
+        currentUserId = profile.userId;
+        loadStarMap();
+      } catch (err) {
+        if (err && err.message === "TIMEOUT_INIT") {
+          renderState("⏱️", "liff.init() 逾時，請檢查 LIFF App 的 Endpoint URL 設定。");
+        } else {
+          renderState("⚠️", "LIFF 初始化失敗：" + (err && err.message ? err.message : JSON.stringify(err)));
+        }
+      }
+    }
+
+    main();
+  </script>
+
+</body>
+</html>
