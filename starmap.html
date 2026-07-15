@@ -392,6 +392,29 @@
       };
     }
 
+    // 畫一顆星星圖案：已解鎖＝圓心+十字光芒放射；未解鎖＝樸素暗淡小點
+    function starGlyph(cx, cy, r, color, unlocked, big) {
+      if (!unlocked) {
+        return '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.8) + '" fill="#3a3f6e" opacity="0.5"/>';
+      }
+      var rayLen = r * (big ? 3.2 : 2.6);
+      var svg = '';
+      var dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+      dirs.forEach(function(d) {
+        var x2 = cx + d[0] * rayLen, y2 = cy + d[1] * rayLen;
+        svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + color + '" stroke-width="1" stroke-linecap="round" opacity="0.65"/>';
+      });
+      if (big) {
+        var diag = [[0.7, -0.7], [0.7, 0.7], [-0.7, -0.7], [-0.7, 0.7]];
+        diag.forEach(function(d) {
+          var x2 = cx + d[0] * rayLen * 0.6, y2 = cy + d[1] * rayLen * 0.6;
+          svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + color + '" stroke-width="0.8" stroke-linecap="round" opacity="0.45"/>';
+        });
+      }
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + color + '"/>';
+      return svg;
+    }
+
     function renderStarMap(result) {
       if (!result) { renderState("⚠️", "查詢失敗，請稍後再試"); return; }
       if (result.needBind) { renderBindForm(); return; }
@@ -420,19 +443,15 @@
         });
       }
 
-      // 星星本體
+      // 星星本體：已解鎖用十字光芒放射效果，未解鎖維持樸素小點
       stars.forEach(function(s) {
         var pos = layout.positions[s.id];
         if (!pos) return;
         var isTerm = s.isTerminal;
-        var r = isTerm ? 10 : 7;
-        var fillColor = s.isUnlocked ? pos.color : "#3a3f6e";
-        var opacity = s.isUnlocked ? "1" : (isTerm ? "0.3" : "0.55");
-        svg += '<circle class="star-dot" data-id="' + s.id + '" cx="' + pos.x + '" cy="' + pos.y + '" r="' + r + '" fill="' + fillColor + '" opacity="' + opacity + '"' +
-          (isTerm ? ' style="filter:blur(' + (s.isUnlocked ? '0' : '0.6') + 'px)"' : '') + '/>';
-        if (s.isUnlocked) {
-          svg += '<circle cx="' + pos.x + '" cy="' + pos.y + '" r="' + (r + 4) + '" fill="none" stroke="' + pos.color + '" stroke-width="0.5" opacity="0.4"/>';
-        }
+        var r = isTerm ? 5 : 3.5;
+        var glyph = starGlyph(pos.x, pos.y, r, pos.color, s.isUnlocked, isTerm);
+        svg += '<g class="star-dot" data-id="' + s.id + '"' +
+          (isTerm && !s.isUnlocked ? ' style="filter:blur(0.6px)"' : '') + '>' + glyph + '</g>';
       });
 
       svg += '</svg>';
@@ -502,10 +521,8 @@
 
       pts.forEach(function(p) {
         var s = p.star;
-        var fill = s.isUnlocked ? "var(--gold)" : "#2a2f5c";
-        var r = s.isUnlocked ? 5 : 4;
-        svg += '<circle class="traj-star" data-id="' + s.id + '" cx="' + p.x + '" cy="' + p.y + '" r="' + r + '" fill="' + fill + '"' +
-          (s.isUnlocked ? ' opacity="1"' : ' opacity="0.5" stroke="var(--border)" stroke-width="0.5"') + '/>';
+        var glyph = starGlyph(p.x, p.y, 2.2, "var(--gold)", s.isUnlocked, false);
+        svg += '<g class="traj-star" data-id="' + s.id + '">' + glyph + '</g>';
       });
 
       svg += '</svg>';
