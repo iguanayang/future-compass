@@ -132,7 +132,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(5,7,20,0.75);
+      background: rgba(5,7,20,0.8);
       display: none;
       align-items: center;
       justify-content: center;
@@ -143,21 +143,27 @@
     .modal-overlay.show { display: flex; }
 
     .modal-card {
-      background: var(--panel);
+      background: radial-gradient(ellipse at 50% 0%, rgba(129,140,248,0.08), transparent 65%), var(--panel);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 26px 22px 22px;
+      border-radius: 20px;
+      padding: 30px 24px 20px;
       max-width: 320px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 0 40px rgba(129, 140, 248, 0.15), 0 0 0 1px rgba(255,255,255,0.02) inset;
+      box-shadow: 0 0 50px rgba(129, 140, 248, 0.18), 0 0 0 1px rgba(255,255,255,0.02) inset;
       position: relative;
+      animation: cardOpen 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes cardOpen {
+      0% { opacity: 0; transform: scale(0.92) translateY(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     .modal-card .star-icon {
-      font-size: 30px;
+      font-size: 26px;
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       filter: drop-shadow(0 0 10px rgba(255, 222, 89, 0.5));
       animation: twinkle 2.4s ease-in-out infinite;
     }
@@ -168,98 +174,112 @@
     }
 
     .modal-eyebrow {
-      font-size: 10px;
-      letter-spacing: 2px;
+      font-size: 9.5px;
+      letter-spacing: 2.5px;
       color: var(--text-dim);
-      margin-bottom: 4px;
+      opacity: 0.6;
+      margin-bottom: 6px;
+      text-transform: uppercase;
     }
 
-    .modal-card h3 { margin: 0 0 4px; font-size: 17px; }
+    .modal-card h3 {
+      margin: 0 0 3px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #c8ccf0;
+    }
 
     .modal-date {
-      font-size: 10.5px;
+      font-size: 10px;
       color: var(--text-dim);
-      opacity: 0.7;
-      margin-bottom: 4px;
+      opacity: 0.55;
+      font-style: italic;
+      margin-bottom: 16px;
     }
 
     .modal-divider {
       height: 1px;
-      margin: 14px 0;
+      margin: 6px 0 18px;
       background: linear-gradient(90deg, transparent, var(--career-color), transparent);
-      opacity: 0.35;
+      opacity: 0.3;
     }
 
-    .takeaway-block { padding: 2px 0; }
+    .takeaway-block { padding: 4px 4px 6px; }
 
     .takeaway-label {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--gold);
-      font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: 0.5px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+      opacity: 0.9;
     }
 
     .takeaway-text {
-      font-size: 15px;
-      line-height: 1.75;
-      font-weight: 600;
-      color: var(--text);
+      font-family: Georgia, "Noto Serif TC", "PingFang TC", serif;
+      font-size: 17px;
+      line-height: 1.85;
+      font-weight: 500;
+      color: #fffdf5;
       margin: 0;
-      text-shadow: 0 0 16px rgba(255, 222, 89, 0.25);
+      text-shadow: 0 0 20px rgba(255, 222, 89, 0.2);
+      letter-spacing: 0.3px;
     }
 
     .takeaway-empty {
-      font-size: 12.5px;
+      font-family: Georgia, "Noto Serif TC", "PingFang TC", serif;
+      font-size: 13px;
       color: var(--text-dim);
       font-style: italic;
       margin: 0;
-      opacity: 0.8;
+      opacity: 0.75;
+      line-height: 1.7;
     }
 
-    .aurora-block { padding: 2px 0; }
+    .aurora-block {
+      padding: 2px 6px 0;
+      margin-top: 4px;
+    }
 
     .aurora-label {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--life-color);
-      font-weight: 600;
-      margin-bottom: 6px;
+      font-weight: 500;
+      margin-bottom: 5px;
       letter-spacing: 0.5px;
+      opacity: 0.75;
     }
 
     .aurora-text {
-      font-size: 12.5px;
+      font-size: 11.5px;
       line-height: 1.7;
-      color: #b8bee0;
+      color: #8b91b8;
       margin: 0;
+      font-style: italic;
     }
 
-    .modal-footer-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
+    .modal-meta {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 0.5px solid rgba(255,255,255,0.06);
+      font-size: 10px;
       color: var(--text-dim);
-    }
-
-    .modal-footer-row .badge-note { text-align: left; }
-    .modal-footer-row .star-number { color: var(--gold); opacity: 0.85; }
-
-    .points-note {
-      margin-top: 8px;
-      font-size: 12px;
-      color: var(--gold);
-      font-weight: 600;
+      opacity: 0.55;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .modal-card button {
-      margin-top: 18px;
-      background: var(--panel);
+      margin-top: 20px;
+      background: transparent;
       border: 1px solid var(--border);
-      color: var(--text);
+      color: var(--text-dim);
       border-radius: 10px;
-      padding: 8px 20px;
-      font-size: 13px;
+      padding: 7px 22px;
+      font-size: 12px;
       cursor: pointer;
     }
 
@@ -575,20 +595,17 @@
         html += '</div>';
 
         if (star.auroraMessage) {
-          html += '<div class="modal-divider"></div>';
           html += '<div class="aurora-block">';
           html += '<div class="aurora-label">📡 Aurora 留言</div>';
           html += '<p class="aurora-text">' + escapeHtml(star.auroraMessage).replace(/\n/g, "<br>") + '</p>';
           html += '</div>';
         }
 
-        html += '<div class="modal-divider"></div>';
-
-        html += '<div class="modal-footer-row">';
-        if (star.badgeId) html += '<span class="badge-note">🏅 ' + escapeHtml(star.name) + '徽章</span>';
-        html += '<span class="star-number">⭐ ' + escapeHtml(star.number) + '</span>';
-        html += '</div>';
-        html += '<div class="points-note">✨ 探索積分 +' + star.points + '</div>';
+        var metaParts = [];
+        if (star.badgeId) metaParts.push('🏅 ' + escapeHtml(star.name) + '徽章');
+        metaParts.push('⭐ ' + escapeHtml(star.number));
+        metaParts.push('✨ +' + star.points);
+        html += '<div class="modal-meta">' + metaParts.map(function(p) { return '<span>' + p + '</span>'; }).join('<span>·</span>') + '</div>';
       } else {
         html += '<div class="modal-divider"></div>';
         html += '<p class="takeaway-empty" style="margin-top:10px;">尚未點亮這顆星，繼續探索解鎖它吧！</p>';
