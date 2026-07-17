@@ -54,6 +54,12 @@
     .star-dot { cursor: pointer; transition: r 0.2s ease; }
     .star-dot:active { r: 12; }
 
+    .star-dot.ambient-twinkle { animation: ambientTwinkle 4.5s ease-in-out infinite; }
+    @keyframes ambientTwinkle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
+    }
+
     .zone-label {
       font-size: 10px;
       fill: var(--text-dim);
@@ -198,6 +204,8 @@
       margin-bottom: 16px;
     }
 
+    .modal-date-abs { opacity: 0.7; }
+
     .modal-divider {
       height: 1px;
       margin: 6px 0 18px;
@@ -283,6 +291,56 @@
       cursor: pointer;
     }
 
+    .modal-btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .modal-btn-row button { margin-top: 0; flex: 1; }
+
+    .btn-primary {
+      background: linear-gradient(90deg, var(--career-color), var(--life-color)) !important;
+      color: #0a0e27 !important;
+      border: none !important;
+      font-weight: 700;
+    }
+
+    /* 分享圖卡預覽 */
+    .share-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5,7,20,0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 24px;
+      flex-direction: column;
+    }
+    .share-overlay.show { display: flex; }
+    .share-overlay img {
+      max-width: 300px;
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: 0 0 40px rgba(129,140,248,0.3);
+    }
+    .share-hint {
+      color: var(--text-dim);
+      font-size: 12px;
+      margin: 16px 0;
+      text-align: center;
+    }
+    .share-overlay button {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 24px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
     .state-box { max-width: 480px; margin: 60px auto; padding: 0 32px; text-align: center; }
     .state-box .emoji { font-size: 40px; display: block; margin-bottom: 14px; }
     .state-box p { color: var(--text-dim); font-size: 14px; line-height: 1.7; margin: 0; }
@@ -336,6 +394,12 @@
     <div class="modal-card" id="modalCard"></div>
   </div>
 
+  <div class="share-overlay" id="shareOverlay">
+    <img id="shareImg" src="" alt="收藏卡片">
+    <div class="share-hint">長按圖片即可儲存到相簿</div>
+    <button onclick="closeShareOverlay()">關閉</button>
+  </div>
+
   <script>
     var currentUserId = null;
     var starData = null;
@@ -370,6 +434,29 @@
       note.style.cssText = "text-align:center;font-size:11px;color:var(--text-dim);padding:6px 0;";
       note.textContent = text;
       wrap.appendChild(note);
+    }
+
+    // 把「2026.07.15」這種日期，換算成「3個月前」這種相對時間，更有記憶點
+    function relativeTimeText(dateStr) {
+      if (!dateStr) return "";
+      var parts = dateStr.split(/[.\/\-]/).map(function(n) { return parseInt(n, 10); });
+      if (parts.length < 3 || parts.some(isNaN)) return dateStr;
+      var d = new Date(parts[0], parts[1] - 1, parts[2]);
+      if (isNaN(d.getTime())) return dateStr;
+      var diffDays = Math.floor((new Date() - d) / 86400000);
+      if (diffDays < 0) return dateStr;
+      if (diffDays === 0) return "今天點亮";
+      if (diffDays < 30) return diffDays + " 天前";
+      var months = Math.floor(diffDays / 30);
+      if (months < 12) return months + " 個月前";
+      return Math.floor(months / 12) + " 年前";
+    }
+
+    // 簡易字串雜湊，用來讓每顆星的閃爍動畫有各自不同、但固定的節奏（不會每次重繪就變動）
+    function simpleHash(str) {
+      var h = 0;
+      for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 1000;
+      return Math.abs(h);
     }
 
     function escapeHtml(str) {
@@ -457,11 +544,13 @@
       careerStars.forEach(function(s) { if (s.system && systems.indexOf(s.system) === -1) systems.push(s.system); });
       var careerTop = 280;
       var cols = 3, rowGap = 120, colGap = 115;
+      var completedSystems = [];
       systems.forEach(function(sys, si) {
         var col = si % cols, row = Math.floor(si / cols);
         var cx = 95 + col * colGap;
         var cy = careerTop + row * rowGap;
         var starsInSys = careerStars.filter(function(s) { return s.system === sys; });
+        var orderedIds = [];
         starsInSys.forEach(function(s, i) {
           var angle = (Math.PI * 2 / starsInSys.length) * i - Math.PI / 2;
           positions[s.id] = {
@@ -469,7 +558,12 @@
             y: cy + Math.sin(angle) * 18,
             color: SYSTEM_COLOR[sys] || "var(--career-color)"
           };
+          orderedIds.push(s.id);
         });
+        var allUnlocked = starsInSys.length > 0 && starsInSys.every(function(s) { return s.isUnlocked; });
+        if (allUnlocked) {
+          completedSystems.push({ cx: cx, cy: cy, r: 32, ids: orderedIds, color: SYSTEM_COLOR[sys] || "var(--career-color)" });
+        }
       });
 
       // 生活星座：小群聚在底部
@@ -490,7 +584,8 @@
         selfCenter: {x: selfCenterX, y: selfCenterY}, outer: outer, terminal: terminal,
         selfLabelY: selfCenterY - selfR - 30,
         careerLabelY: careerTop - 60,
-        lifeLabelY: lifeCenterY - 55
+        lifeLabelY: lifeCenterY - 55,
+        completedSystems: completedSystems
       };
     }
 
@@ -545,6 +640,16 @@
         });
       }
 
+      // 職業星座：已集滿的星系，5顆星互相連線形成小星座圖案 + 淡淡發光邊框
+      layout.completedSystems.forEach(function(sysInfo) {
+        svg += '<circle cx="' + sysInfo.cx + '" cy="' + sysInfo.cy + '" r="' + sysInfo.r + '" fill="none" stroke="' + sysInfo.color + '" stroke-width="0.6" opacity="0.3"/>';
+        for (var i = 0; i < sysInfo.ids.length; i++) {
+          var p1 = layout.positions[sysInfo.ids[i]];
+          var p2 = layout.positions[sysInfo.ids[(i + 1) % sysInfo.ids.length]];
+          svg += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y + '" stroke="' + sysInfo.color + '" stroke-width="0.8" opacity="0.5"/>';
+        }
+      });
+
       // 星星本體：已解鎖用十字光芒放射效果，未解鎖維持樸素小點
       stars.forEach(function(s) {
         var pos = layout.positions[s.id];
@@ -552,8 +657,14 @@
         var isTerm = s.isTerminal;
         var r = isTerm ? 5 : 3.5;
         var glyph = starGlyph(pos.x, pos.y, r, pos.color, s.isUnlocked, isTerm);
-        svg += '<g class="star-dot" data-id="' + s.id + '"' +
-          (isTerm && !s.isUnlocked ? ' style="filter:blur(0.6px)"' : '') + '>' + glyph + '</g>';
+        var hash = simpleHash(s.id);
+        var shouldTwinkle = s.isUnlocked && (hash % 2 === 0); // 約半數已解鎖的星星帶環境閃爍，避免太整齊
+        var twinkleClass = shouldTwinkle ? " ambient-twinkle" : "";
+        var styleParts = [];
+        if (shouldTwinkle) styleParts.push("animation-delay:" + (hash % 45 / 10) + "s");
+        if (isTerm && !s.isUnlocked) styleParts.push("filter:blur(0.6px)");
+        var styleAttr = styleParts.length ? ' style="' + styleParts.join(";") + '"' : "";
+        svg += '<g class="star-dot' + twinkleClass + '" data-id="' + s.id + '"' + styleAttr + '>' + glyph + '</g>';
       });
 
       svg += '</svg>';
@@ -582,7 +693,10 @@
       html += '<h3>' + escapeHtml(star.name) + '</h3>';
 
       if (star.isUnlocked) {
-        if (star.completedDate) html += '<div class="modal-date">' + escapeHtml(star.completedDate) + '</div>';
+        if (star.completedDate) {
+          html += '<div class="modal-date">' + escapeHtml(relativeTimeText(star.completedDate)) +
+            ' <span class="modal-date-abs">· ' + escapeHtml(star.completedDate) + '</span></div>';
+        }
         html += '<div class="modal-divider"></div>';
 
         html += '<div class="takeaway-block">';
@@ -606,14 +720,135 @@
         metaParts.push('⭐ ' + escapeHtml(star.number));
         metaParts.push('✨ +' + star.points);
         html += '<div class="modal-meta">' + metaParts.map(function(p) { return '<span>' + p + '</span>'; }).join('<span>·</span>') + '</div>';
+
+        currentModalStar = star;
+        html += '<div class="modal-btn-row">';
+        html += '<button class="btn-secondary" onclick="closeModal()">關閉</button>';
+        html += '<button class="btn-primary" onclick="shareStarCard()">🖼️ 收藏這顆星</button>';
+        html += '</div>';
       } else {
         html += '<div class="modal-divider"></div>';
         html += '<p class="takeaway-empty" style="margin-top:10px;">尚未點亮這顆星，繼續探索解鎖它吧！</p>';
+        html += '<button onclick="closeModal()">關閉</button>';
       }
 
-      html += '<button onclick="closeModal()">關閉</button>';
       document.getElementById("modalCard").innerHTML = html;
       document.getElementById("modalOverlay").classList.add("show");
+    }
+
+    var currentModalStar = null;
+
+    function wrapCanvasText(ctx, text, maxWidth) {
+      var chars = text.split("");
+      var lines = [];
+      var line = "";
+      chars.forEach(function(ch) {
+        var test = line + ch;
+        if (ctx.measureText(test).width > maxWidth && line !== "") {
+          lines.push(line);
+          line = ch;
+        } else {
+          line = test;
+        }
+      });
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    function shareStarCard() {
+      var star = currentModalStar;
+      if (!star) return;
+
+      var W = 640, H = 800;
+      var canvas = document.createElement("canvas");
+      canvas.width = W; canvas.height = H;
+      var ctx = canvas.getContext("2d");
+
+      // 背景：深邃宇宙漸層
+      var grad = ctx.createRadialGradient(W/2, 0, 0, W/2, H*0.4, H*0.9);
+      grad.addColorStop(0, "#1a1f4a");
+      grad.addColorStop(1, "#0a0e27");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 隨機灑一些小星點做裝飾
+      ctx.fillStyle = "rgba(255,255,255,0.5)";
+      for (var i = 0; i < 40; i++) {
+        var sx = Math.random() * W, sy = Math.random() * H;
+        var sr = Math.random() * 1.5 + 0.3;
+        ctx.beginPath();
+        ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 卡片邊框
+      ctx.strokeStyle = "rgba(129,140,248,0.35)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(30, 30, W - 60, H - 60);
+
+      ctx.textAlign = "center";
+
+      // 星星圖示
+      ctx.font = "56px sans-serif";
+      ctx.fillStyle = "#ffde59";
+      ctx.fillText("✨", W/2, 130);
+
+      // 眉標
+      ctx.font = "16px sans-serif";
+      ctx.fillStyle = "rgba(151,151,194,0.8)";
+      ctx.fillText("星球檔案", W/2, 168);
+
+      // 星球名稱
+      ctx.font = "bold 30px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+      ctx.fillStyle = "#c8ccf0";
+      ctx.fillText(star.name, W/2, 210);
+
+      // 我的收穫（視覺焦點）
+      var takeawayText = star.myTakeaway ? "「" + star.myTakeaway + "」" : "這段旅程的收穫，等你來寫下";
+      ctx.font = "14px sans-serif";
+      ctx.fillStyle = "#ffde59";
+      ctx.fillText("💡 我的收穫", W/2, 280);
+
+      ctx.font = "26px Georgia, 'Noto Serif TC', serif";
+      ctx.fillStyle = "#fffdf5";
+      var lines = wrapCanvasText(ctx, takeawayText, W - 140);
+      var lineY = 330;
+      lines.forEach(function(l) {
+        ctx.fillText(l, W/2, lineY);
+        lineY += 40;
+      });
+
+      // Aurora 留言
+      if (star.auroraMessage) {
+        lineY += 30;
+        ctx.font = "13px sans-serif";
+        ctx.fillStyle = "rgba(139,145,184,0.9)";
+        ctx.fillText("📡 Aurora 留言", W/2, lineY);
+        lineY += 28;
+        ctx.font = "italic 16px 'PingFang TC', sans-serif";
+        var auroraLines = wrapCanvasText(ctx, star.auroraMessage, W - 160);
+        auroraLines.forEach(function(l) {
+          ctx.fillText(l, W/2, lineY);
+          lineY += 24;
+        });
+      }
+
+      // 底部 metadata + 浮水印
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "rgba(151,151,194,0.6)";
+      ctx.fillText("⭐ " + star.number + "　✨ +" + star.points, W/2, H - 90);
+
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "rgba(151,151,194,0.45)";
+      ctx.fillText("我的星圖 · 未來羅盤", W/2, H - 50);
+
+      var dataUrl = canvas.toDataURL("image/png");
+      document.getElementById("shareImg").src = dataUrl;
+      document.getElementById("shareOverlay").classList.add("show");
+    }
+
+    function closeShareOverlay() {
+      document.getElementById("shareOverlay").classList.remove("show");
     }
 
     function closeModal() {
