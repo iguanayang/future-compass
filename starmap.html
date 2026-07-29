@@ -805,14 +805,14 @@
 
       // 我的收穫（視覺焦點）
       var takeawayText = star.myTakeaway ? "「" + star.myTakeaway + "」" : "這段旅程的收穫，等你來寫下";
-      ctx.font = "14px sans-serif";
+      ctx.font = "bold 30px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
       ctx.fillStyle = "#ffde59";
-      ctx.fillText("💡 我的收穫", W/2, 280);
+      ctx.fillText("💡 我的收穫", W/2, 290);
 
       ctx.font = "26px Georgia, 'Noto Serif TC', serif";
       ctx.fillStyle = "#fffdf5";
       var lines = wrapCanvasText(ctx, takeawayText, W - 140);
-      var lineY = 330;
+      var lineY = 345;
       lines.forEach(function(l) {
         ctx.fillText(l, W/2, lineY);
         lineY += 40;
@@ -840,7 +840,7 @@
 
       ctx.font = "12px sans-serif";
       ctx.fillStyle = "rgba(151,151,194,0.45)";
-      ctx.fillText("我的星圖 · 未來羅盤", W/2, H - 50);
+      ctx.fillText("每次探索・都是成長", W/2, H - 50);
 
       var dataUrl = canvas.toDataURL("image/png");
       document.getElementById("shareImg").src = dataUrl;
