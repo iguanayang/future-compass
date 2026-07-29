@@ -420,8 +420,9 @@
         '<div class="bind-box">' +
           '<span class="emoji">🔑</span>' +
           '<h2>第一次使用，請先綁定身份</h2>' +
-          '<p>輸入你的探員專屬代碼完成綁定，之後開啟本頁面會自動辨識，不需要再輸入</p>' +
-          '<input type="text" id="bindCodeInput" placeholder="請輸入代碼" autocapitalize="off" autocorrect="off">' +
+          '<p>輸入你的探員編號，並設定一組專屬代碼完成綁定，之後開啟本頁面會自動辨識，不需要再輸入</p>' +
+          '<input type="text" id="bindAgentIdInput" placeholder="請輸入探員編號" autocapitalize="off" autocorrect="off">' +
+          '<input type="text" id="bindCodeInput" placeholder="請設定一組好記的代碼" autocapitalize="off" autocorrect="off">' +
           '<button id="bindSubmitBtn">完成綁定</button>' +
           '<div class="bind-error" id="bindErrorMsg">' + (errorMsg ? escapeHtml(errorMsg) : '') + '</div>' +
         '</div>';
@@ -433,21 +434,22 @@
     }
 
     function submitBind() {
-      var input = document.getElementById("bindCodeInput");
+      var agentIdInput = document.getElementById("bindAgentIdInput");
+      var codeInput = document.getElementById("bindCodeInput");
       var btn = document.getElementById("bindSubmitBtn");
       var errBox = document.getElementById("bindErrorMsg");
-      var code = input.value.trim();
+      var agentId = agentIdInput.value.trim();
+      var code = codeInput.value.trim();
 
-      if (!code) {
-        errBox.textContent = "請輸入代碼";
-        return;
-      }
+      if (!agentId) { errBox.textContent = "請輸入探員編號"; return; }
+      if (!code) { errBox.textContent = "請設定一組代碼"; return; }
 
       btn.disabled = true;
       btn.textContent = "綁定中...";
       errBox.textContent = "";
 
-      var url = GAS_API_URL + "?action=bindAgent&userId=" + encodeURIComponent(currentUserId) + "&code=" + encodeURIComponent(code);
+      var url = GAS_API_URL + "?action=bindAgentByAgentId&userId=" + encodeURIComponent(currentUserId) +
+        "&agentId=" + encodeURIComponent(agentId) + "&code=" + encodeURIComponent(code);
 
       jsonpRequest(url)
         .then(function(result) {
