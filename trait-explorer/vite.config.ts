@@ -3,17 +3,15 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
-const repositoryName = process.env.GITHUB_REPOSITORY?.split("/")[1];
-const isUserOrOrganizationSite = repositoryName?.endsWith(".github.io");
-const githubPagesBase = repositoryName && !isUserOrOrganizationSite ? `/${repositoryName}/` : "/";
+const githubPagesBase = "/future-compass/trait-explorer/";
 
 /**
  * Pure static Vite configuration.
- * Local development and custom domains use `/`; GitHub Actions automatically uses the repository subpath.
- * Set VITE_BASE_PATH when a different public base is needed.
+ * The deployed site lives at https://iguanayang.github.io/future-compass/trait-explorer/.
+ * Keep this prefix fixed so every generated JS, CSS, and public asset URL resolves in that subdirectory.
  */
 export default defineConfig({
-  base: process.env.VITE_BASE_PATH ?? (process.env.GITHUB_ACTIONS === "true" ? githubPagesBase : "/"),
+  base: githubPagesBase,
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

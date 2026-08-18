@@ -13,7 +13,7 @@
 | `client/src/index.css` | 星圖檔案庫視覺、響應式版面與所有互動動畫。 |
 | `docs/TRAIT_RESULT_SYSTEM.md` | 十題特質權重、同分判定、三特質組合 Aurora 觀察與探索卡規則。 |
 | `client/src/App.tsx` | React 應用程式根元件與全域互動提供者。 |
-| `vite.config.ts` | 純靜態 Vite 建置設定；在 GitHub Actions 中自動使用 GitHub Pages 的儲存庫子路徑。 |
+| `vite.config.ts` | 純靜態 Vite 建置設定；固定使用 `/future-compass/trait-explorer/` 公開子路徑。 |
 | `.github/workflows/deploy-pages.yml` | 推送到 `main` 後自動檢查、建置並部署 GitHub Pages 的工作流程。 |
 | `client/public/.nojekyll` | 停用 GitHub Pages 的 Jekyll 處理，確保靜態資源原樣發布。 |
 
@@ -53,23 +53,17 @@ git remote add origin https://github.com/<你的帳號>/<儲存庫名稱>.git
 git push -u origin main
 ```
 
-推送後，前往該儲存庫的 **Settings → Pages**，在 **Build and deployment** 的 **Source** 選擇 **GitHub Actions**。工作流程會在每次推送至 `main` 時自動執行：安裝依賴、型別檢查、Vite 靜態建置、上傳 `dist/`，最後部署 GitHub Pages。這是 Vite 官方建議的 GitHub Pages 建置方式。[1]
+推送後，前往該儲存庫的 **Settings → Pages**，在 **Build and deployment** 的 **Source** 選擇 **GitHub Actions**。工作流程會在每次推送至 `main` 時自動執行：安裝依賴、型別檢查、Vite 靜態建置，再將 `dist/` 包裝到 Pages 網站根目錄下的 `trait-explorer/` 資料夾，最後部署 GitHub Pages。這是 Vite 官方建議的 GitHub Pages 建置方式。[1]
 
-| GitHub Pages 類型 | 預設公開網址 | 本專案的 `base` 行為 |
+| GitHub Pages 發佈根目錄 | 特質探索實際位置 | 本專案的 `base` 行為 |
 | --- | --- | --- |
-| 專案網站 | `https://<帳號>.github.io/<儲存庫名稱>/` | GitHub Actions 會自動使用 `/<儲存庫名稱>/`。 |
-| 使用者／組織網站 | `https://<帳號>.github.io/` | GitHub Actions 會自動使用 `/`。 |
-| 自訂網域 | 依綁定網域而定 | 在 Actions 或本機建置設定 `VITE_BASE_PATH=/`。 |
+| `https://iguanayang.github.io/future-compass/` | `https://iguanayang.github.io/future-compass/trait-explorer/` | 固定使用 `/future-compass/trait-explorer/`，Actions 會將靜態檔放進同名子資料夾。 |
 
 完成第一次工作流程後，請到 **Actions** 檢查 `Deploy Future Compass to GitHub Pages` 已成功；GitHub Pages 的公開網址會顯示在工作流程的部署步驟與 Settings → Pages 中。
 
-### 儲存庫名稱或分支不同時
+### 分支不同時
 
-工作流程預設監看 `main`。如果使用 `master` 或其他分支，請修改 `.github/workflows/deploy-pages.yml` 的 `branches: [main]`。Vite 對 GitHub Pages 專案網站需要使用 `/<儲存庫名稱>/` base；此專案已在 GitHub Actions 環境自動處理。若改用手動建置或特殊網域，可透過 `VITE_BASE_PATH` 明確覆寫。[1]
-
-```bash
-VITE_BASE_PATH=/你的儲存庫名稱/ pnpm build
-```
+工作流程預設監看 `main`。如果使用 `master` 或其他分支，請修改 `.github/workflows/deploy-pages.yml` 的 `branches: [main]`。本專案已鎖定對應 `future-compass/trait-explorer` 的公開路徑；若日後改用其他 GitHub 帳號、儲存庫或子目錄，必須一併更新 `vite.config.ts` 的 `githubPagesBase`、`client/src/App.tsx` 的路由基底，以及工作流程中 `pages-site/trait-explorer` 的資料夾名稱。
 
 ## 純前端資料與隱私
 

@@ -39,3 +39,35 @@
 - [x] 確認探索卡第一名主要特質的資料來源。
 - [x] 設計低調的本次最亮線索標記與對應文案。
 - [x] 實作標記並驗證手機版與 GitHub Pages 靜態建置。
+
+## 特質與 Aurora 觀察盤點
+
+- [x] 讀取目前特質、排名規則與 Aurora 觀察模板。
+- [x] 整理主要與次要特質如何影響完整觀察及探索卡精簡版。
+- [x] 製作所有現行文案模板的檢查清單，不修改程式。
+
+## 指定 GitHub Pages 路徑重建
+
+- [x] 檢視現有 Vite base 設定與 dist 輸出狀態。
+- [x] 設定 `/future-compass/trait-explorer/` 為固定公開 base path。
+- [x] 重新建立 dist 並驗證 HTML、JS、CSS 與資產引用。
+- [x] 封裝完整 dist 資料夾供下載。
+
+## dist 靜態網站重新產生
+
+- [x] 確認 GitHub Pages 子目錄設定。
+- [x] 重新建立 dist 靜態網站檔案。
+- [x] 驗證與封裝完整 dist 資料夾供下載。
+
+## GitHub Pages 顯示 README 排查
+
+- [x] 檢視現有 GitHub Pages Actions 工作流程與 dist 輸出根目錄。
+- [x] 調整發佈產物，使 `trait-explorer/` 子目錄含有靜態網站首頁。
+- [x] 驗證網址、HTML 與資產在指定子目錄的對應關係。
+- [x] 整理需在 GitHub Pages 設定介面完成的修正步驟。
+
+## GitHub Pages 子目錄 404 修正
+
+- [x] 調整 React 路由以辨識 `/future-compass/trait-explorer/` 公開基底。
+- [x] 將 GitHub Actions 部署產物包裝為含 `trait-explorer/` 子目錄的網站根目錄。
+- [x] 以本機靜態預覽驗證指定網址路徑不會落入 404 頁面。
