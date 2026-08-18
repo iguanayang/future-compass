@@ -1,1 +1,1 @@
-# future-compass-assets
+# future-compass
