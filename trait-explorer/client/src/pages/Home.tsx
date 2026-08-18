@@ -44,7 +44,7 @@ type SavedProgress = {
   resonance: Resonance | null;
 };
 
-const STORAGE_KEY = "future-compass-trait-exploration-v3";
+const STORAGE_KEY = "future-compass-trait-exploration-v4";
 const TOTAL_COORDINATES = traitCoordinates.length;
 
 const resonanceCopy: Record<Resonance, string> = {
@@ -207,7 +207,7 @@ function SynthesisView({ onBack }: { onBack?: () => void }) {
   );
 }
 
-function TraitsView({ traits, observation, onBack, onContinue }: { traits: TraitDefinition[]; observation: AuroraObservation; onBack: () => void; onContinue: () => void }) {
+function TraitsView({ traits, observation, onBack, onContinue, onRestart }: { traits: TraitDefinition[]; observation: AuroraObservation; onBack: () => void; onContinue: () => void; onRestart: () => void }) {
   return (
     <section className="view stage-enter">
       <StageHeader stage="traits" coordinateIndex={TOTAL_COORDINATES - 1} onBack={onBack} />
@@ -227,7 +227,10 @@ function TraitsView({ traits, observation, onBack, onContinue }: { traits: Trait
           <small>這是這次選擇留下的線索，有些像、有些不像都很正常。</small>
         </section>
       </main>
-      <div className="bottom-action"><PrimaryButton onClick={onContinue}>這個結果像你嗎？</PrimaryButton></div>
+      <div className="bottom-action result-actions">
+        <PrimaryButton onClick={onContinue}>這個結果像你嗎？</PrimaryButton>
+        <button className="secondary-action" onClick={onRestart}><Sparkles size={15} /> 重新探索</button>
+      </div>
     </section>
   );
 }
@@ -391,6 +394,15 @@ export default function Home() {
     window.setTimeout(() => { window.location.href = "line://"; }, 300);
   };
 
+  const restartExploration = () => {
+    setCoordinateIndex(0);
+    setAnswers([]);
+    setResonance(null);
+    setStage("coordinate");
+    window.localStorage.removeItem(STORAGE_KEY);
+    toast.message("已開啟新的探索航線", { description: "從第一個生活座標重新開始。" });
+  };
+
   const isResumeAvailable = answers.length > 0 && stage === "home";
   const beginExploration = () => setStage("coordinate");
 
@@ -406,7 +418,7 @@ export default function Home() {
       content = <SynthesisView onBack={() => setStage("clue")} />;
       break;
     case "traits":
-      content = <TraitsView traits={topTraits} observation={auroraObservation} onBack={goBack} onContinue={() => setStage("resonance")} />;
+      content = <TraitsView traits={topTraits} observation={auroraObservation} onBack={goBack} onContinue={() => setStage("resonance")} onRestart={restartExploration} />;
       break;
     case "resonance":
       content = <ResonanceView resonance={resonance} onBack={goBack} onSelect={setResonance} onContinue={() => setStage("card")} />;
