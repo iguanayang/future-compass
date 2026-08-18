@@ -300,7 +300,7 @@ function CardView({ traits, observation, onBack, onReturn }: { traits: TraitDefi
           </div>
           <section className="aurora-note">
             <div className="aurora-note-icon"><Compass size={17} /></div>
-            <div><p>🔭 Aurora 觀察</p><span>{observation.compact}</span></div>
+            <div><p>🔭 Aurora 觀察</p><span>{observation.full}</span></div>
           </section>
           <div className="profile-stats"><span>🏅 特質徽章</span><span>⭐ 探索積分 +10</span><span>🌌 星圖進度 +2%</span></div>
           <footer>Future Compass <span>｜未來羅盤</span></footer>
