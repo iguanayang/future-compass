@@ -10,7 +10,7 @@
       --bg: #14141f;
       --panel: #1a1a2e;
       --border: #2d2d44;
-      --cyan: #00ffff;
+      --cyan: #ff9d5c;
       --gold: #ffde59;
       --text: #ffffff;
       --text-dim: #8a8aa3;
@@ -98,9 +98,10 @@
       position: relative;
     }
 
+    /* 未解鎖也維持清楚可讀，重點是讓使用者看得懂達成條件，跟稱號手冊採同一套邏輯 */
     .badge-card.locked {
-      background: #1e1e2e;
-      opacity: 0.55;
+      background: #1c1c2e;
+      opacity: 0.9;
     }
 
     .badge-img-wrap {
@@ -113,12 +114,21 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid var(--cyan);
+      border: 2px dashed var(--cyan);
+    }
+
+    @keyframes patchGlow {
+      0%, 100% { box-shadow: 0 0 0px rgba(255, 157, 92, 0.35); }
+      50% { box-shadow: 0 0 14px rgba(255, 157, 92, 0.55); }
+    }
+
+    .badge-card:not(.locked) .badge-img-wrap {
+      animation: patchGlow 3s ease-in-out infinite;
     }
 
     .badge-card.locked .badge-img-wrap {
       border-color: var(--border);
-      filter: grayscale(100%) brightness(0.5);
+      border-style: dashed;
     }
 
     .badge-img-wrap img {
@@ -136,13 +146,15 @@
       line-height: 1.4;
     }
 
-    .badge-card.locked .badge-name { color: var(--text-dim); }
+    .badge-card.locked .badge-name { color: var(--text); }
 
     .badge-desc {
       font-size: 11px;
       color: var(--text-dim);
       line-height: 1.5;
     }
+
+    .badge-card.locked .badge-desc { color: #a8a8c0; }
 
     .badge-check {
       position: absolute;
@@ -210,7 +222,7 @@
       padding: 14px;
       border-radius: 12px;
       border: none;
-      background: linear-gradient(90deg, var(--cyan), #4dd0e1);
+      background: linear-gradient(90deg, var(--cyan), var(--gold));
       color: #0f0f1c;
       font-size: 15px;
       font-weight: 700;
@@ -248,13 +260,13 @@
     }
 
     .tab-btn.active {
-      background: linear-gradient(90deg, var(--cyan), #4dd0e1);
+      background: linear-gradient(90deg, var(--cyan), var(--gold));
       color: #0f0f1c;
       border-color: transparent;
     }
 
     .title-card.locked {
-      opacity: 0.85;
+      opacity: 0.9;
     }
 
     .title-icon-wrap {
@@ -265,7 +277,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid var(--cyan);
+      border: 2px dashed var(--cyan);
       font-size: 30px;
     }
 
@@ -377,19 +389,6 @@
         script.src = url + (url.indexOf("?") === -1 ? "?" : "&") + "callback=" + callbackName;
         document.head.appendChild(script);
       });
-    }
-
-    var currentUserId = null;
-
-    function driveThumb(fileId) {
-      if (!fileId) return "";
-      return "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w200";
-    }
-
-    function escapeHtml(str) {
-      var div = document.createElement("div");
-      div.textContent = str || "";
-      return div.innerHTML;
     }
 
     var currentUserId = null;
