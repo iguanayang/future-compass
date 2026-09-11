@@ -10,7 +10,7 @@
       --bg: #14141f;
       --panel: #1a1a2e;
       --border: #2d2d44;
-      --cyan: #00ffff;
+      --cyan: #ff9d5c;
       --gold: #ffde59;
       --text: #ffffff;
       --text-dim: #8a8aa3;
@@ -118,13 +118,23 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid var(--cyan);
+      border: 2px dashed var(--cyan);
       font-size: 28px;
       background: #0f0f1c;
     }
 
     .title-card.locked .title-icon-wrap {
       border-color: var(--border);
+      border-style: dashed;
+    }
+
+    @keyframes patchGlow {
+      0%, 100% { box-shadow: 0 0 0px rgba(255, 157, 92, 0.35); }
+      50% { box-shadow: 0 0 14px rgba(255, 157, 92, 0.55); }
+    }
+
+    .title-card:not(.locked) .title-icon-wrap {
+      animation: patchGlow 3s ease-in-out infinite;
     }
 
     .title-name {
@@ -228,7 +238,7 @@
       padding: 14px;
       border-radius: 12px;
       border: none;
-      background: linear-gradient(90deg, var(--cyan), #4dd0e1);
+      background: linear-gradient(90deg, var(--cyan), var(--gold));
       color: #0f0f1c;
       font-size: 15px;
       font-weight: 700;
@@ -261,7 +271,7 @@
 <body>
 
   <div class="header">
-    <span class="icon">🎖️</span>
+    <span class="icon">🧭</span>
     <h1>稱號手冊</h1>
     <div class="agent-name" id="agentName"></div>
     <div class="subtitle">看看還有哪些稱號可以挑戰！</div>
@@ -269,7 +279,7 @@
 
   <div class="progress-wrap" id="progressWrap" style="display:none;">
     <div class="progress-label">
-      <span>已解鎖</span>
+      <span>已回報任務</span>
       <span id="progressText">0 / 0</span>
     </div>
     <div class="progress-bar">
@@ -464,7 +474,7 @@
       var html = '<div class="grid">';
       titles.forEach(function(title) {
         var lockedClass = title.isUnlocked ? "" : " locked";
-        var icon = title.isUnlocked ? "🎖️" : "🔓";
+        var icon = title.isUnlocked ? "🧭" : "📡";
 
         html +=
           '<div class="title-card' + lockedClass + '">' +
