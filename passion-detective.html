@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>熱情探索｜熱情偵探</title>
+<style>
+  :root {
+    --bg: #0a0a16;
+    --bg2: #171227;
+    --card-bg: #14101f;
+    --card-bg2: #1c1730;
+    --ember: #ff9d5c;
+    --ember-strong: #ffc79a;
+    --gold: #e8c988;
+    --cream: #f4ecd8;
+    --cream-text: #2a2014;
+    --text: #f4efe8;
+    --text-dim: #9993ab;
+    --border: rgba(255, 157, 92, 0.2);
+    --mono: "SFMono-Regular", "JetBrains Mono", "Menlo", monospace;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; margin: 0; }
+
+  body {
+    background: radial-gradient(circle at 70% -8%, var(--bg2) 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    min-height: 100%;
+    overflow-x: hidden;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  #starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.5; animation: twinkle 3.6s ease-in-out infinite; }
+  @keyframes twinkle { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.65; } }
+
+  .orbit-ring { position: fixed; border: 1px solid rgba(255,157,92,0.12); border-radius: 50%; pointer-events: none; z-index: 0; }
+  .orbit-ring.r1 { width: 480px; height: 480px; top: -200px; right: -180px; transform: rotate(10deg); }
+  .orbit-ring.r2 { width: 280px; height: 280px; bottom: -100px; left: -100px; transform: rotate(-6deg); border-color: rgba(255,157,92,0.08); }
+
+  .magnifier-mark { position: fixed; bottom: -60px; right: -50px; width: 260px; height: 260px; pointer-events: none; z-index: 0; opacity: 0.5; }
+
+  /* ---------- 手電筒探照區 ---------- */
+
+  .flashlight-stage {
+    position: relative;
+    height: 190px;
+    border-radius: 22px;
+    overflow: hidden;
+    background: #030206;
+    border: 1px solid var(--border);
+    margin: 4px 0 6px;
+    touch-action: none;
+    cursor: none;
+  }
+  .stage-scene { position: absolute; inset: 0; }
+  .stage-scene span {
+    position: absolute;
+    font-size: 21px;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 8px rgba(255,199,154,0.55));
+  }
+  .stage-scene .word {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--ember-strong);
+    white-space: nowrap;
+    filter: none;
+  }
+  .stage-beam {
+    position: absolute;
+    width: 96px;
+    height: 96px;
+    margin-left: -48px;
+    margin-top: -48px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 999px rgba(2,1,4,0.96), 0 0 46px 16px rgba(255,199,154,0.5);
+    animation: beamPatrol 9s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes beamPatrol {
+    0%   { left: 18%; top: 32%; }
+    22%  { left: 78%; top: 22%; }
+    48%  { left: 60%; top: 74%; }
+    72%  { left: 22%; top: 68%; }
+    100% { left: 18%; top: 32%; }
+  }
+  .stage-caption {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(232,201,136,0.65);
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+    margin: 8px 0 18px;
+  }
+  @media (prefers-reduced-motion: reduce) { .stage-beam { animation: none; left: 50%; top: 50%; } }
+
+  #app {
+    position: relative; z-index: 1;
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    padding: clamp(16px, 4vw, 26px) clamp(14px, 4vw, 22px) 44px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex; flex-direction: column;
+  }
+
+  @media (min-width: 720px) {
+    #app { max-width: 520px; padding-top: 40px; }
+    .headline { font-size: 27px; }
+    .body-copy { font-size: 14.5px; }
+  }
+
+  @media (min-width: 1080px) {
+    #app { max-width: 560px; }
+  }
+
+  /* ---------- 品牌頁首 ---------- */
+
+  .logo-row { display: flex; align-items: center; justify-content: space-between; gap: 11px; margin-bottom: 10px; }
+  .logo-left { display: flex; align-items: center; gap: 11px; }
+  .logo-icon {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .logo-text { display: flex; flex-direction: column; }
+  .logo-text .en { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; color: var(--gold); }
+  .logo-text .zh { font-size: 15px; font-weight: 800; color: var(--text); margin-top: 2px; }
+  .logo-underline { height: 1px; background: linear-gradient(90deg, var(--gold), transparent); opacity: 0.5; margin: 0 0 18px; }
+
+  /* ---------- 內容卡 ---------- */
+
+  .story-card {
+    position: relative;
+    border-radius: 26px;
+    background: linear-gradient(160deg, var(--card-bg2) 0%, var(--card-bg) 55%);
+    border: 1px solid var(--border);
+    padding: 22px 20px 24px;
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .card-wash {
+    position: absolute; top: -40px; left: -40px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,157,92,0.22) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .card-badge {
+    position: absolute; top: 20px; right: 20px;
+    width: 46px; height: 46px; border-radius: 50%;
+    border: 1.5px dashed rgba(255,157,92,0.55);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; background: rgba(255,157,92,0.06);
+  }
+  .card-spark { position: absolute; top: 8px; right: 66px; font-size: 13px; color: var(--gold); opacity: 0.8; }
+
+  .case-tape {
+    position: absolute; top: -9px; left: 26px;
+    width: 64px; height: 20px;
+    background: rgba(244,236,216,0.85);
+    transform: rotate(-4deg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  }
+  .case-stamp {
+    position: absolute; top: 66px; right: 18px;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: 0.14em;
+    color: rgba(255,157,92,0.4);
+    border: 1px solid rgba(255,157,92,0.35);
+    border-radius: 4px;
+    padding: 2px 6px;
+    transform: rotate(6deg);
+  }
+
+  .card-eyebrow { font-size: 14.5px; font-weight: 800; color: var(--ember); margin: 2px 0 4px; display: flex; align-items: center; gap: 7px; }
+  .card-route { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em; color: rgba(232,201,136,0.7); margin-bottom: 18px; display: flex; align-items: center; gap: 5px; }
+
+  .headline { font-size: 25px; font-weight: 900; line-height: 1.32; margin: 0 0 12px; letter-spacing: 0.2px; }
+  .body-copy { font-size: 13.5px; color: var(--text-dim); line-height: 1.75; margin: 0 0 4px; }
+
+  .chip-row { display: flex; gap: 10px; margin: 18px 0 4px; }
+  .chip {
+    flex: 1;
+    background: var(--cream);
+    color: var(--cream-text);
+    border-radius: 16px;
+    padding: 13px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+  .chip .chip-icon {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 1.5px solid var(--ember);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; margin-bottom: 8px;
+  }
+
+  /* ---------- 按鈕 ---------- */
+
+  .cta {
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    width: 100%; border: none; border-radius: 999px;
+    padding: 17px 22px; margin-top: 20px;
+    background: linear-gradient(90deg, var(--ember-strong), var(--ember));
+    color: #241005; font-weight: 800; font-size: 15.5px; cursor: pointer;
+  }
+  .cta .arrow { font-size: 17px; }
+  .cta:disabled { opacity: 0.32; cursor: default; }
+
+  .cta-ghost {
+    width: 100%; border: 1px solid var(--border); border-radius: 999px;
+    padding: 15px 22px; background: transparent; color: var(--text-dim);
+    font-weight: 700; font-size: 13.5px; cursor: pointer; text-align: center; margin-top: 10px;
+  }
+
+  .footer-actions { margin-top: auto; padding-top: 6px; }
+
+  /* ---------- Aurora 簽名區 ---------- */
+
+  .aurora-signature {
+    display: flex; gap: 12px; align-items: flex-start;
+    border-left: 2px solid var(--gold);
+    padding: 2px 0 2px 14px;
+    margin: 6px 0 20px;
+  }
+  .owl-avatar { width: 42px; height: 42px; flex-shrink: 0; }
+  .aurora-signature .label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; font-weight: 700;
+    color: var(--gold); margin-bottom: 4px; display: block;
+  }
+  .aurora-signature p { margin: 0; font-size: 12.5px; line-height: 1.65; color: var(--text-dim); }
+
+  /* ---------- 玩法介紹 ---------- */
+
+  .howto-list { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 6px; }
+  .howto-item { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; background: rgba(255,157,92,0.04); }
+  .howto-item .num { font-size: 19px; flex-shrink: 0; }
+  .howto-item h3 { margin: 0 0 3px; font-size: 13.5px; font-weight: 700; }
+  .howto-item p { margin: 0; font-size: 12px; color: var(--text-dim); line-height: 1.55; }
+
+  /* ---------- STEP1 活動宮格 ---------- */
+
+  .select-count { text-align: center; font-size: 12.5px; color: var(--text-dim); margin: 2px 0 14px; font-family: var(--mono); letter-spacing: 0.04em; }
+  .select-count b { color: var(--ember); }
+
+  .tile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tile {
+    background: rgba(255,157,92,0.04); border: 1.5px dashed rgba(255,157,92,0.25); border-radius: 14px;
+    padding: 14px 6px 10px; text-align: center; cursor: pointer; position: relative;
+    transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .tile .tile-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+  .tile .tile-name { font-size: 11px; font-weight: 600; line-height: 1.35; }
+  .tile.selected { border-color: var(--ember); border-style: solid; background: linear-gradient(180deg, rgba(255,157,92,0.2), rgba(255,157,92,0.04)); transform: translateY(-2px); }
+  .tile.selected::after { content: "✓"; position: absolute; top: 6px; right: 8px; font-size: 11px; color: var(--ember); font-weight: 800; }
+  .tile.disabled { opacity: 0.3; pointer-events: none; }
+
+  /* ---------- STEP2 投入程度 ---------- */
+
+  .focus-card { text-align: center; margin: 2px 0 18px; }
+  .focus-icon { font-size: 50px; display: block; margin-bottom: 8px; filter: drop-shadow(0 0 16px rgba(255,157,92,0.35)); }
+  .focus-name { font-size: 18px; font-weight: 800; }
+  .focus-question { font-size: 13.5px; color: var(--text-dim); margin-top: 6px; }
+
+  .invest-options { display: flex; flex-direction: column; gap: 10px; }
+  .invest-btn { display: flex; align-items: center; gap: 12px; background: rgba(255,157,92,0.04); border: 1.5px solid rgba(255,157,92,0.2); border-radius: 14px; padding: 13px 16px; cursor: pointer; text-align: left; }
+  .invest-btn .icon { font-size: 19px; }
+  .invest-btn .label { font-size: 13.5px; font-weight: 600; }
+  .invest-btn.picked { border-color: var(--ember); background: linear-gradient(90deg, rgba(255,157,92,0.2), rgba(255,157,92,0.04)); }
+
+  /* ---------- STEP3 線索追查 ---------- */
+
+  .clue-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 12px; }
+  .clue-chip { background: rgba(255,157,92,0.04); border: 1.5px dashed rgba(255,157,92,0.25); border-radius: 14px; padding: 14px 10px; text-align: center; cursor: pointer; position: relative; }
+  .clue-chip .icon { font-size: 21px; display: block; margin-bottom: 6px; }
+  .clue-chip .name { font-size: 12px; font-weight: 600; line-height: 1.4; }
+  .clue-chip.picked { border-color: var(--ember); border-style: solid; background: linear-gradient(180deg, rgba(255,157,92,0.2), rgba(255,157,92,0.04)); }
+  .clue-chip.picked::after { content: "✓ 已列證"; position: absolute; top: 6px; right: 8px; font-size: 8.5px; font-family: var(--mono); color: var(--ember); font-weight: 700; }
+  .clue-hint { text-align: center; font-size: 11.5px; color: rgba(232,201,136,0.65); font-family: var(--mono); }
+
+  /* ---------- STEP4 結果 ---------- */
+
+  .result-intro { text-align: center; margin: 2px 0 16px; position: relative; }
+  .result-intro .big-icon { font-size: 34px; display: block; margin-bottom: 6px; animation: popIn 0.5s ease; }
+  @keyframes popIn { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+
+  .case-closed-stamp {
+    display: inline-flex; flex-direction: column; align-items: center;
+    border: 2.5px solid rgba(255,157,92,0.75);
+    border-radius: 10px;
+    padding: 6px 16px;
+    transform: rotate(-6deg);
+    margin: 0 0 12px;
+    animation: stampDown 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+  }
+  .case-closed-stamp .en { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--ember); font-weight: 700; }
+  .case-closed-stamp .zh { font-size: 10px; letter-spacing: 0.08em; color: rgba(255,157,92,0.7); margin-top: 1px; }
+  @keyframes stampDown { 0% { transform: rotate(-6deg) scale(2.4); opacity: 0; } 60% { opacity: 1; } 100% { transform: rotate(-6deg) scale(1); opacity: 1; } }
+
+  .result-clue { display: flex; gap: 12px; background: rgba(255,157,92,0.05); border: 1px solid var(--border); border-left: 2px solid var(--ember); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+  .result-clue .icon { font-size: 21px; flex-shrink: 0; }
+  .result-clue .node-num { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; color: rgba(232,201,136,0.65); display: block; margin-bottom: 2px; }
+  .result-clue h4 { margin: 0 0 4px; font-size: 14px; font-weight: 800; }
+  .result-clue p { margin: 0; font-size: 12px; color: var(--text-dim); line-height: 1.55; }
+
+  .aurora-finding { background: var(--cream); color: var(--cream-text); border-radius: 16px; padding: 16px; margin: 16px 0; }
+  .aurora-finding .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; font-weight: 700; color: #a1592a; margin-bottom: 8px; display: block; }
+  .aurora-finding p { margin: 0; font-size: 12.5px; line-height: 1.75; }
+
+  /* ---------- STEP4：結果總覽（熱情地圖） ---------- */
+
+  .result-hero { text-align: center; padding: 6px 4px 4px; }
+  .result-hero .badge-circle {
+    position: relative;
+    width: 52px; height: 52px; margin: 0 auto 14px;
+    border-radius: 50%;
+    border: 1.5px dashed rgba(255,157,92,0.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 21px;
+    background: rgba(255,157,92,0.06);
+    animation: patchGlow2 2.6s ease-in-out infinite;
+  }
+  .result-hero .badge-circle::after {
+    content: "✦"; position: absolute; top: -6px; right: -8px;
+    font-size: 12px; color: var(--gold);
+  }
+  @keyframes patchGlow2 { 0%,100% { box-shadow: 0 0 0 rgba(255,157,92,0.3); } 50% { box-shadow: 0 0 16px rgba(255,157,92,0.45); } }
+  .result-hero .mono-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; color: rgba(232,201,136,0.75); margin-bottom: 10px; }
+  .result-hero .headline { font-size: 26px; margin-bottom: 10px; }
+  .result-hero .subtitle { font-size: 13px; color: var(--text-dim); line-height: 1.7; max-width: 300px; margin: 0 auto; }
+
+  .passion-map-card {
+    position: relative;
+    background: var(--cream);
+    color: var(--cream-text);
+    border-radius: 20px;
+    padding: 20px 20px 22px;
+    margin: 20px 0 18px;
+    transform: rotate(-0.8deg);
+    box-shadow: 0 16px 34px rgba(0,0,0,0.35);
+  }
+  .map-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .map-card-header .title { font-size: 14px; font-weight: 800; line-height: 1.4; }
+  .map-card-header .badge {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1.5px solid var(--ember);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .map-divider { height: 1px; background: rgba(42,32,20,0.14); margin: 12px 0; }
+  .map-eyebrow { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; color: #a1592a; margin-bottom: 6px; }
+  .map-headline { font-size: 19px; font-weight: 800; line-height: 1.4; margin-bottom: 10px; }
+  .map-stat-line { font-size: 11.5px; color: rgba(42,32,20,0.65); }
+
+  .map-columns-label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; color: rgba(42,32,20,0.55); margin-bottom: 10px; }
+
+  .ranked-clue { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-top: 1px solid rgba(42,32,20,0.08); }
+  .ranked-clue:first-of-type { border-top: none; }
+  .ranked-clue .rank-num { font-family: var(--mono); font-size: 13px; font-weight: 700; color: rgba(42,32,20,0.4); width: 18px; flex-shrink: 0; padding-top: 2px; }
+  .ranked-clue .icon { font-size: 18px; flex-shrink: 0; }
+  .ranked-clue h4 { margin: 0 0 3px; font-size: 13.5px; font-weight: 800; }
+  .ranked-clue p { margin: 0; font-size: 11.5px; line-height: 1.55; color: rgba(42,32,20,0.75); }
+  .ranked-clue .evidence { font-size: 10px; font-style: italic; color: rgba(42,32,20,0.5); margin-top: 4px; }
+  .ranked-clue .medal { font-size: 15px; flex-shrink: 0; margin-left: auto; padding-top: 2px; }
+
+  .also-map-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; color: rgba(42,32,20,0.55); margin: 4px 0 10px; }
+  .also-map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+  .also-map-chip { border: 1.5px dashed rgba(42,32,20,0.25); border-radius: 12px; padding: 10px 10px; font-size: 11px; }
+  .also-map-chip .rk { font-family: var(--mono); font-size: 10px; color: rgba(42,32,20,0.45); margin-right: 4px; }
+  .also-map-chip .nm { font-weight: 700; }
+
+  .map-quote { border-left: 2px solid var(--ember); padding-left: 12px; margin: 14px 0 12px; font-size: 12.5px; line-height: 1.7; }
+
+  .map-footer { display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; color: rgba(42,32,20,0.5); }
+  .map-footer .route { font-family: var(--mono); letter-spacing: 0.08em; }
+
+  .aurora-panel {
+    border: 1px solid var(--border);
+    background: rgba(255,157,92,0.04);
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+  .aurora-panel .panel-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .aurora-panel .panel-head .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; font-weight: 700; color: var(--gold); }
+  .aurora-panel p { margin: 0 0 12px; font-size: 12.5px; line-height: 1.75; color: var(--text-dim); }
+  .aurora-panel p:last-child { margin-bottom: 0; }
+  .aurora-panel .quote-block { border-left: 2px solid var(--gold); padding-left: 12px; color: var(--text); }
+  .aurora-panel .tip-line { color: rgba(232,201,136,0.75); font-size: 11.5px; }
+
+  .logo-right .pill-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: 999px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer;
+  }
+
+  .next-step-note { font-size: 11.5px; color: var(--text-dim); text-align: center; line-height: 1.7; margin: 2px 0 4px; }
+  .next-step-note b { color: var(--text); }
+
+  /* ---------- 分享卡 overlay ---------- */
+
+  .share-overlay { position: fixed; inset: 0; background: rgba(3,3,8,0.92); display: none; align-items: center; justify-content: center; z-index: 200; padding: 24px; flex-direction: column; }
+  .share-overlay.show { display: flex; }
+  .share-overlay img { max-width: 320px; width: 100%; border-radius: 16px; box-shadow: 0 0 50px rgba(255,157,92,0.2); }
+  .share-hint { color: var(--text-dim); font-size: 12px; margin: 16px 0; text-align: center; }
+  .share-overlay button { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 9px 26px; font-size: 13px; cursor: pointer; }
+
+  @media (prefers-reduced-motion: reduce) { .star, .result-intro .big-icon { animation: none !important; } }
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+<div class="orbit-ring r1"></div>
+<div class="orbit-ring r2"></div>
+<svg class="magnifier-mark" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="85" cy="85" r="52" fill="none" stroke="#e8c988" stroke-width="6"/>
+  <line x1="122" y1="122" x2="170" y2="170" stroke="#e8c988" stroke-width="10" stroke-linecap="round"/>
+</svg>
+<div id="app"></div>
+
+<div class="share-overlay" id="shareOverlay">
+  <img id="shareImg" src="" alt="熱情探索卡">
+  <div class="share-hint">長按圖片即可儲存到相簿</div>
+  <button onclick="closeShare()">關閉</button>
+</div>
+
+<script>
+/* ================= 資料設定 ================= */
+
+var CLUES = [
+  { id: "make",     icon: "🎨", name: "把想法變成作品",     desc: "比起空想，你更想把腦中的畫面實際做出來，看得到、摸得到的成果對你來說特別重要。" },
+  { id: "solve",     icon: "🧩", name: "破解問題與謎題",     desc: "卡關的時候你反而更有動力，你喜歡一步步拆解，直到找到答案的那個瞬間。" },
+  { id: "together",  icon: "👥", name: "跟別人一起完成",     desc: "一個人做也可以，但有夥伴一起投入時，你會更有動力、也更享受整個過程。" },
+  { id: "grow",      icon: "🏆", name: "挑戰自己變更強",     desc: "比起結果，你更在意自己有沒有比昨天更厲害，進步感是你持續下去的燃料。" },
+  { id: "explore",   icon: "🔍", name: "探索新的方法或玩法", desc: "你不太喜歡照著固定做法走，反而喜歡自己試試看不同方式，找出更好的解法。" },
+  { id: "story",     icon: "📖", name: "創造故事或內容",     desc: "你喜歡把一個想法變成一段完整的故事或內容，讓別人也能感受到你想表達的東西。" },
+  { id: "howworks",  icon: "🛠️", name: "研究事情怎麼運作",   desc: "比起使用它，你更想知道它背後是怎麼被做出來的，拆解、理解是你的樂趣來源。" },
+  { id: "unique",    icon: "✨", name: "做出不一樣的東西",   desc: "你不太滿足於照著做，更想在裡面加入只有你會做的細節或風格。" },
+  { id: "discover",  icon: "🌍", name: "認識新的人事物",     desc: "新的場景、新的人、新的資訊，都會讓你想主動靠近，你享受原來還有這種東西的瞬間。" },
+  { id: "detail",    icon: "🎯", name: "把細節做到位",       desc: "你在意的常常是別人不會注意到的小地方，把一件事情做到細緻會讓你特別有成就感。" }
+];
+
+function getClue(id) {
+  for (var i = 0; i < CLUES.length; i++) if (CLUES[i].id === id) return CLUES[i];
+  return null;
+}
+
+var ACTIVITIES = [
+  { id: "game",   icon: "🎮", name: "設計一款遊戲",         clues: ["make","solve","explore","unique"] },
+  { id: "draw",   icon: "🎨", name: "畫角色",               clues: ["make","unique","story","detail"] },
+  { id: "video",  icon: "🎥", name: "拍短影片",             clues: ["story","unique","make","discover"] },
+  { id: "fix",    icon: "🔧", name: "修理東西",             clues: ["howworks","solve","detail","grow"] },
+  { id: "cook",   icon: "🍳", name: "做料理",               clues: ["make","detail","unique","explore"] },
+  { id: "pet",    icon: "🐶", name: "照顧動物",             clues: ["together","detail","discover","grow"] },
+  { id: "puzzle", icon: "🧩", name: "解謎遊戲",             clues: ["solve","explore","grow","howworks"] },
+  { id: "perform",icon: "🎤", name: "表演",                 clues: ["story","unique","together","grow"] },
+  { id: "social", icon: "📱", name: "做社群內容",           clues: ["story","unique","discover","make"] },
+  { id: "exp",    icon: "🔬", name: "做實驗",               clues: ["howworks","solve","explore","discover"] },
+  { id: "chat",   icon: "🗣️", name: "跟人聊天",             clues: ["together","discover","story","explore"] },
+  { id: "travel", icon: "🌍", name: "探索陌生地方",         clues: ["discover","explore","together","grow"] },
+  { id: "music",  icon: "🎵", name: "做音樂",               clues: ["make","unique","story","detail"] },
+  { id: "write",  icon: "📖", name: "寫故事",               clues: ["story","unique","make","detail"] },
+  { id: "build",  icon: "🏗️", name: "動手組裝東西",         clues: ["make","howworks","detail","grow"] },
+  { id: "team",   icon: "🧑‍🤝‍🧑", name: "跟朋友一起做一件事", clues: ["together","grow","story","make"] },
+  { id: "study",  icon: "🧠", name: "研究好奇的問題",       clues: ["howworks","explore","solve","discover"] },
+  { id: "photo",  icon: "📸", name: "拍照",                 clues: ["unique","detail","discover","story"] }
+];
+
+function getActivity(id) {
+  for (var i = 0; i < ACTIVITIES.length; i++) if (ACTIVITIES[i].id === id) return ACTIVITIES[i];
+  return null;
+}
+
+var INVEST_LEVELS = [
+  { score: 1, icon: "😐", label: "有人叫我才會做" },
+  { score: 2, icon: "🙂", label: "有空可能會做" },
+  { score: 3, icon: "🔥", label: "沒人叫我也會自己做" },
+  { score: 4, icon: "🚀", label: "做到忘記時間也有可能" }
+];
+
+var HOWTO_STEPS = [
+  { icon: "🔎", title: "發現線索", desc: "看看哪些事情會讓你忍不住想點開。" },
+  { icon: "🔥", title: "熱情升溫", desc: "確認這些事情，你是不是願意主動投入。" },
+  { icon: "🕵️", title: "偵探追查", desc: "找出你真正被吸引的，到底是哪一部分。" },
+  { icon: "🌟", title: "解鎖線索", desc: "整理出屬於你的熱情線索，生成探索卡。" }
+];
+
+var AURORA_LINES = {
+  step1: "先別急著下結論，看看什麼會讓你想靠近。",
+  step2: "有興趣是一回事，願意投入又是另一回事。",
+  step3: "找到了！但我們還要確認……你真正被吸引的是哪一部分？",
+  step4: "線索整理完成！"
+};
+
+/* ================= 狀態 ================= */
+
+var state = {
+  screen: "home",
+  selected: [],
+  investment: {},
+  step2Index: 0,
+  step3Queue: [],
+  step3Index: 0,
+  clueSelections: {},
+  finalClues: []
+};
+
+function resetState() {
+  state = {
+    screen: "home",
+    selected: [],
+    investment: {},
+    step2Index: 0,
+    step3Queue: [],
+    step3Index: 0,
+    clueSelections: {},
+    finalClues: []
+  };
+  render();
+}
+
+/* ================= 星空背景 ================= */
+
+function initStarfield() {
+  var field = document.getElementById("starfield");
+  var html = "";
+  for (var i = 0; i < 40; i++) {
+    var size = (Math.random() * 2 + 1).toFixed(1);
+    var top = (Math.random() * 100).toFixed(1);
+    var left = (Math.random() * 100).toFixed(1);
+    var delay = (Math.random() * 3.6).toFixed(1);
+    html += '<div class="star" style="width:' + size + 'px;height:' + size + 'px;top:' + top + '%;left:' + left + '%;animation-delay:' + delay + 's;"></div>';
+  }
+  field.innerHTML = html;
+}
+
+/* ================= 共用元件 ================= */
+
+var OWL_SVG =
+  '<svg class="owl-avatar" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M10 18 Q17 5 25 15" stroke="#e8c988" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+    '<path d="M50 18 Q43 5 35 15" stroke="#e8c988" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+    '<circle cx="30" cy="32" r="23" fill="#2a2016"/>' +
+    '<ellipse cx="20" cy="29" rx="7.5" ry="8.5" fill="#f4ecd8"/>' +
+    '<ellipse cx="40" cy="29" rx="7.5" ry="8.5" fill="#f4ecd8"/>' +
+    '<circle cx="20" cy="30" r="3.3" fill="#ff9d5c"/>' +
+    '<circle cx="40" cy="30" r="3.3" fill="#ff9d5c"/>' +
+    '<path d="M30 35 L25.5 42 L34.5 42 Z" fill="#e8c988"/>' +
+  '</svg>';
+
+function renderBrandLogo(rightHtml) {
+  return (
+    '<div class="logo-row">' +
+      '<div class="logo-left">' +
+        '<div class="logo-icon">🚀</div>' +
+        '<div class="logo-text"><span class="en">FUTURE COMPASS</span><span class="zh">未來羅盤</span></div>' +
+      '</div>' +
+      (rightHtml ? '<div class="logo-right">' + rightHtml + '</div>' : '') +
+    '</div>' +
+    '<div class="logo-underline"></div>'
+  );
+}
+
+var STAGE_ICONS = [
+  { icon: "🎮", x: 14, y: 30 }, { icon: "🎨", x: 30, y: 62 }, { icon: "🎥", x: 50, y: 20 },
+  { icon: "🔧", x: 68, y: 55 }, { icon: "🍳", x: 84, y: 30 }, { icon: "🎵", x: 20, y: 78 },
+  { icon: "📖", x: 45, y: 82 }, { icon: "🔬", x: 62, y: 78 }, { icon: "🌍", x: 80, y: 68 },
+  { icon: "✨", x: 38, y: 42 }, { icon: "🧩", x: 92, y: 50 }
+];
+
+function renderFlashlightStage() {
+  var scene = "";
+  STAGE_ICONS.forEach(function(s) {
+    scene += '<span style="left:' + s.x + '%;top:' + s.y + '%;">' + s.icon + '</span>';
+  });
+  scene += '<span class="word" style="left:50%;top:50%;">EMBER ROUTE · 未知線索</span>';
+
+  return (
+    '<div class="flashlight-stage">' +
+      '<div class="stage-scene">' + scene + '</div>' +
+      '<div class="stage-beam"></div>' +
+    '</div>' +
+    '<div class="stage-caption">🔦 移動手電筒，照出藏在暗處的線索</div>'
+  );
+}
+
+function bindFlashlight() {
+  var stage = document.querySelector(".flashlight-stage");
+  if (!stage) return;
+  var beam = stage.querySelector(".stage-beam");
+  var resumeTimer = null;
+
+  function setBeam(clientX, clientY) {
+    var rect = stage.getBoundingClientRect();
+    var relX = ((clientX - rect.left) / rect.width) * 100;
+    var relY = ((clientY - rect.top) / rect.height) * 100;
+    relX = Math.max(0, Math.min(100, relX));
+    relY = Math.max(0, Math.min(100, relY));
+    beam.style.animation = "none";
+    beam.style.left = relX + "%";
+    beam.style.top = relY + "%";
+  }
+
+  function onMove(e) {
+    var point = (e.touches && e.touches[0]) || e;
+    setBeam(point.clientX, point.clientY);
+    clearTimeout(resumeTimer);
+  }
+
+  function onLeave() {
+    resumeTimer = setTimeout(function() { beam.style.animation = ""; }, 1000);
+  }
+
+  stage.addEventListener("pointermove", onMove);
+  stage.addEventListener("pointerdown", onMove);
+  stage.addEventListener("pointerleave", onLeave);
+}
+
+function cardOpen(eyebrowIcon, eyebrowText, routeLabel, badgeIcon) {
+  return (
+    '<div class="story-card">' +
+      '<div class="card-wash"></div>' +
+      '<div class="case-tape"></div>' +
+      '<span class="card-spark">✦</span>' +
+      '<div class="card-badge">' + badgeIcon + '</div>' +
+      '<div class="case-stamp">CASE FILE</div>' +
+      '<div class="card-eyebrow"><span>' + eyebrowIcon + '</span>' + eyebrowText + '</div>' +
+      '<div class="card-route"><span>📌</span>' + routeLabel + '</div>'
+  );
+}
+var CARD_CLOSE = '</div>';
+
+function auroraSignature(label, text) {
+  return (
+    '<div class="aurora-signature">' +
+      OWL_SVG +
+      '<div><span class="label">AURORA ・ ' + label + '</span><p>' + text + '</p></div>' +
+    '</div>'
+  );
+}
+
+/* ================= 畫面渲染 ================= */
+
+function render() {
+  var app = document.getElementById("app");
+  var html = "";
+
+  if (state.screen === "home") html = renderHome();
+  else if (state.screen === "howto") html = renderHowto();
+  else if (state.screen === "step1") html = renderStep1();
+  else if (state.screen === "step2") html = renderStep2();
+  else if (state.screen === "step3") html = renderStep3();
+  else if (state.screen === "step4") html = renderStep4();
+
+  app.innerHTML = html;
+  bindEvents();
+}
+
+function renderHome() {
+  return (
+    renderBrandLogo() +
+    renderFlashlightStage() +
+    cardOpen("🔥", "你被什麼吸引？", "EMBER ROUTE · START HERE", "🕵️") +
+      '<div class="headline">熱情<br>偵探</div>' +
+      '<p class="body-copy">不是要測出「你喜歡什麼」，而是像一名偵探，從你的選擇裡，找出會讓你想靠近、願意投入的線索。這次沒有標準答案，跟著直覺選就好。</p>' +
+      '<div class="chip-row">' +
+        '<div class="chip"><div class="chip-icon">⏱</div>約 3～5 分鐘</div>' +
+        '<div class="chip"><div class="chip-icon">🔎</div>18 個活動 → 找出 5 個</div>' +
+      '</div>' +
+      '<button class="cta" id="btnStart"><span>開始探索</span><span class="arrow">→</span></button>' +
+    CARD_CLOSE +
+    auroraSignature("引路提醒", "先不用選得漂亮，選你會忍不住想點開的。")
+  );
+}
+
+function renderHowto() {
+  var items = "";
+  HOWTO_STEPS.forEach(function(s, i) {
+    items +=
+      '<div class="howto-item">' +
+        '<span class="num">' + s.icon + '</span>' +
+        '<div><h3>STEP ' + (i + 1) + '｜' + s.title + '</h3><p>' + s.desc + '</p></div>' +
+      '</div>';
+  });
+  return (
+    renderBrandLogo() +
+    cardOpen("📖", "開始之前", "EMBER ROUTE · GUIDE", "📡") +
+      '<div class="headline" style="font-size:22px;">玩法介紹</div>' +
+      '<p class="body-copy" style="margin-bottom:16px;">整個探索大約 3～5 分鐘，四個階段，點一點、選一選就完成。</p>' +
+      '<div class="howto-list">' + items + '</div>' +
+      '<button class="cta" id="btnToStep1"><span>我準備好了</span><span class="arrow">→</span></button>' +
+    CARD_CLOSE
+  );
+}
+
+function renderStep1() {
+  var count = state.selected.length;
+  var tiles = "";
+  ACTIVITIES.forEach(function(a) {
+    var isSel = state.selected.indexOf(a.id) !== -1;
+    var disabled = (!isSel && count >= 5) ? " disabled" : "";
+    tiles +=
+      '<div class="tile' + (isSel ? " selected" : "") + disabled + '" data-id="' + a.id + '">' +
+        '<span class="tile-icon">' + a.icon + '</span>' +
+        '<span class="tile-name">' + a.name + '</span>' +
+      '</div>';
+  });
+
+  return (
+    renderBrandLogo() +
+    cardOpen("🔎", "現在，跟著感覺選", "EMBER ROUTE · NODE 01", "🔎") +
+      '<div class="headline" style="font-size:21px;">發現線索</div>' +
+      '<p class="body-copy">如果這些事情突然出現在你面前，選出 5 個你會想多了解的。</p>' +
+      '<div class="select-count" style="margin-top:14px;">已選 <b>' + count + ' / 5</b></div>' +
+      '<div class="tile-grid">' + tiles + '</div>' +
+      '<button class="cta" id="btnToStep2" ' + (count === 5 ? "" : "disabled") + '><span>下一步</span><span class="arrow">→</span></button>' +
+    CARD_CLOSE +
+    auroraSignature("線索觀察", AURORA_LINES.step1)
+  );
+}
+
+function renderStep2() {
+  var actId = state.selected[state.step2Index];
+  var act = getActivity(actId);
+  var opts = "";
+  INVEST_LEVELS.forEach(function(lv) {
+    var picked = state.investment[actId] === lv.score;
+    opts +=
+      '<div class="invest-btn' + (picked ? " picked" : "") + '" data-score="' + lv.score + '">' +
+        '<span class="icon">' + lv.icon + '</span>' +
+        '<span class="label">' + lv.label + '</span>' +
+      '</div>';
+  });
+
+  return (
+    renderBrandLogo() +
+    cardOpen("🔥", "有一種投入，不用人催", "EMBER ROUTE · NODE 02", "🔥") +
+      '<div class="headline" style="font-size:21px;">熱情升溫</div>' +
+      '<div class="focus-card">' +
+        '<span class="focus-icon">' + act.icon + '</span>' +
+        '<div class="focus-name">' + act.name + '</div>' +
+        '<div class="focus-question">如果沒有人叫你做，你還會自己做嗎？</div>' +
+      '</div>' +
+      '<div class="invest-options">' + opts + '</div>' +
+      '<div class="select-count" style="margin-top:16px;margin-bottom:0;">第 ' + (state.step2Index + 1) + ' / ' + state.selected.length + ' 個</div>' +
+    CARD_CLOSE +
+    auroraSignature("投入判讀", AURORA_LINES.step2)
+  );
+}
+
+function renderStep3() {
+  var actId = state.step3Queue[state.step3Index];
+  var act = getActivity(actId);
+  var picks = state.clueSelections[actId] || [];
+  var chips = "";
+  act.clues.forEach(function(cid) {
+    var c = getClue(cid);
+    var picked = picks.indexOf(cid) !== -1;
+    chips +=
+      '<div class="clue-chip' + (picked ? " picked" : "") + '" data-id="' + cid + '">' +
+        '<span class="icon">' + c.icon + '</span>' +
+        '<span class="name">' + c.name + '</span>' +
+      '</div>';
+  });
+
+  return (
+    renderBrandLogo() +
+    cardOpen("🕵️", "線索藏在細節裡", "EMBER ROUTE · NODE 03", "🕵️") +
+      '<div class="headline" style="font-size:19px;">' + act.icon + ' ' + act.name + '，真正吸引你的地方可能是……</div>' +
+      '<div class="clue-grid">' + chips + '</div>' +
+      '<div class="clue-hint">可以選 1～2 個，選好了再往下一個</div>' +
+      '<button class="cta" id="btnClueNext" ' + (picks.length >= 1 ? "" : "disabled") + '><span>' +
+        (state.step3Index === state.step3Queue.length - 1 ? "解鎖熱情線索" : "下一個") +
+      '</span><span class="arrow">→</span></button>' +
+    CARD_CLOSE +
+    auroraSignature("偵探筆記", AURORA_LINES.step3)
+  );
+}
+
+/* ================= 熱情線索：跨選項深層歸納 ================= */
+/*
+  設計邏輯：
+  STEP3 蒐集到的「投入方式」標籤（CLUES）本身還只是偏原始的選項素材，
+  不能直接當作最終的「熱情線索」呈現給學生。
+  這裡改用一組預先設計好的「原型」（ARCHETYPES），
+  每個原型由兩個投入方式標籤共同定義，
+  只有當學生的選擇「同時」包含這兩個標籤時，才代表這個原型成立——
+  也就是強迫系統一定要做「跨活動的共同點歸納」，而不是把單一選項換個說法重講一次。
+*/
+
+var ARCHETYPES = [
+  { anchors: ["howworks","discover"], icon: "🔭", name: "拆解新世界的好奇心", desc: "比起被告知答案，你可能更享受自己去搞懂一件事怎麼運作、認識一個原本不熟悉的領域。" },
+  { anchors: ["howworks","solve"],     icon: "🧠", name: "搞懂為止的堅持",     desc: "遇到不懂的地方，你可能不會輕易放過，反而想一路拆解到真的搞懂為止。" },
+  { anchors: ["howworks","explore"],   icon: "🧭", name: "喜歡自己摸索答案",   desc: "比起照著固定步驟走，你可能更想自己試出一套屬於自己的理解方式。" },
+  { anchors: ["make","unique"],        icon: "🎨", name: "做出屬於自己的版本", desc: "你可能不只是想完成一件事，而是想在裡面留下只有你才會做出來的痕跡。" },
+  { anchors: ["make","detail"],        icon: "🛠️", name: "在意成品有沒有到位", desc: "從想法變成實際成果的過程裡，你可能特別在意細節有沒有處理好。" },
+  { anchors: ["make","story"],         icon: "📖", name: "把想法說成一段故事", desc: "你可能享受的不只是做出東西，而是讓這個東西背後帶著一段完整的故事。" },
+  { anchors: ["story","unique"],       icon: "✍️", name: "用自己的方式表達",   desc: "比起照著範本表達，你可能更想找到屬於自己的說法或風格。" },
+  { anchors: ["story","together"],     icon: "🎤", name: "透過內容和人產生連結", desc: "你創作或表達的動力，可能有一部分來自想讓別人也感受到、產生共鳴。" },
+  { anchors: ["together","grow"],      icon: "🤝", name: "在夥伴裡一起變強",   desc: "你可能不只是想自己進步，而是在跟別人一起投入時，更容易感覺到自己在成長。" },
+  { anchors: ["together","discover"],  icon: "🌏", name: "在互動裡認識更大的世界", desc: "跟人相處或接觸新環境的過程，可能本身就是你覺得有趣的一部分，不只是結果。" },
+  { anchors: ["grow","solve"],         icon: "💪", name: "在卡關裡確認自己進步", desc: "困難的地方可能不會讓你想放棄，反而是你確認自己有沒有變強的機會。" },
+  { anchors: ["grow","explore"],       icon: "🚀", name: "不斷測試讓自己更好的方法", desc: "你可能習慣主動嘗試不同做法，看看哪一種能讓自己表現得更好。" },
+  { anchors: ["explore","unique"],     icon: "✨", name: "找自己的做法，而不是照做", desc: "同一件事，你可能更想找出一種跟別人不一樣、屬於自己的處理方式。" },
+  { anchors: ["explore","detail"],     icon: "🔧", name: "在嘗試裡把方法磨精緻", desc: "你可能喜歡不斷微調做法，直到細節真的順手為止。" },
+  { anchors: ["detail","solve"],       icon: "🧩", name: "把問題拆到最細才安心", desc: "面對問題時，你可能習慣把它拆得很細、一步一步確認，而不是憑感覺跳過。" },
+  { anchors: ["discover","unique"],    icon: "🪐", name: "從新事物裡找自己的觀點", desc: "接觸新的人事物時，你可能不只是吸收，而是會形成自己的一套看法。" },
+  { anchors: ["together","make"],      icon: "🏗️", name: "喜歡一起把東西做出來", desc: "從無到有做出一個成果的過程，你可能覺得有人一起參與，會比自己一個人更有動力。" },
+  { anchors: ["discover","explore"],   icon: "🌌", name: "喜歡踏進還不熟悉的領域", desc: "面對陌生的場景或主題，你可能不會排斥，反而容易被「還沒去過、還不懂」這件事吸引。" }
+];
+
+// 統計 STEP3 蒐集到的原始投入方式標籤：出現次數 + 各標籤被哪些活動支持
+function computeRawSignal() {
+  var tally = {};
+  var activityMap = {};
+  state.step3Queue.forEach(function(actId) {
+    var picks = state.clueSelections[actId] || [];
+    picks.forEach(function(cid) {
+      tally[cid] = (tally[cid] || 0) + 1;
+      if (!activityMap[cid]) activityMap[cid] = [];
+      if (activityMap[cid].indexOf(actId) === -1) activityMap[cid].push(actId);
+    });
+  });
+  return { tally: tally, activityMap: activityMap };
+}
+
+// 依標籤找出對應的活動名稱，組成「線索依據」文字，用來標明是跨哪些活動歸納出來的
+function buildEvidenceText(tagIds, raw) {
+  var actIds = [];
+  tagIds.forEach(function(t) {
+    (raw.activityMap[t] || []).forEach(function(a) { if (actIds.indexOf(a) === -1) actIds.push(a); });
+  });
+  var names = actIds.map(function(a) { var act = getActivity(a); return act.icon + act.name; });
+  if (names.length === 0) return "";
+  if (names.length === 1) return "這在「" + names[0] + "」裡特別明顯。";
+  return "這在「" + names.slice(0, -1).join("」、「") + "」和「" + names[names.length - 1] + "」裡都出現了類似的傾向。";
+}
+
+// 核心：把原始標籤跨活動歸納成 1～3 個「熱情線索」，而不是直接把標籤排名當結果
+function synthesizePassionClues() {
+  var raw = computeRawSignal();
+  var pickedTags = Object.keys(raw.tally);
+
+  // 只有「兩個標籤都真的出現過」的原型才算成立，這一步就是強制做跨選項的交叉比對
+  var qualifying = ARCHETYPES.filter(function(a) {
+    return a.anchors.every(function(t) { return raw.tally[t] > 0; });
+  }).map(function(a) {
+    var score = a.anchors.reduce(function(s, t) { return s + raw.tally[t]; }, 0);
+    var supportSet = {};
+    a.anchors.forEach(function(t) { (raw.activityMap[t] || []).forEach(function(x) { supportSet[x] = true; }); });
+    score += Object.keys(supportSet).length * 0.5;
+    return { archetype: a, score: score };
+  }).sort(function(x, y) { return y.score - x.score; });
+
+  var selected = [];
+  var also = [];
+  var usedTags = {};
+  qualifying.forEach(function(q) {
+    // 只要其中一個標籤已經被前面選中的線索用過，就視為訊號重複，直接合併省略，
+    // 這樣才不會出現「三個結果都圍繞同一個標籤打轉」的假性豐富
+    var overlapsUsed = q.archetype.anchors.some(function(t) { return usedTags[t]; });
+    if (overlapsUsed) return;
+    if (selected.length < 3) {
+      selected.push(q);
+      q.archetype.anchors.forEach(function(t) { usedTags[t] = true; });
+    } else if (also.length < 2) {
+      also.push(q);
+    }
+  });
+
+  var results = selected.map(function(q) {
+    return {
+      icon: q.archetype.icon,
+      name: q.archetype.name,
+      desc: q.archetype.desc,
+      evidence: buildEvidenceText(q.archetype.anchors, raw)
+    };
+  });
+  var alsoResults = also.map(function(q) {
+    return { icon: q.archetype.icon, name: q.archetype.name };
+  });
+
+  // 保底：如果學生的選擇太分散，完全沒有預先設計的原型同時符合兩個標籤，
+  // 就動態把出現最多次的兩個標籤組合成一句綜合描述，仍然是「跨標籤歸納」而不是照抄選項名稱
+  if (results.length === 0) {
+    var sortedTags = pickedTags.sort(function(a, b) { return raw.tally[b] - raw.tally[a]; });
+    if (sortedTags.length >= 2) {
+      var c1 = getClue(sortedTags[0]), c2 = getClue(sortedTags[1]);
+      results.push({
+        icon: c1.icon,
+        name: c1.name + "與" + c2.name + "之間",
+        desc: "你的線索裡同時出現「" + c1.name + "」和「" + c2.name + "」，這兩者放在一起，或許代表你在投入一件事時，同時在意這兩種感覺。",
+        evidence: buildEvidenceText([sortedTags[0], sortedTags[1]], raw)
+      });
+    } else if (sortedTags.length === 1) {
+      var c = getClue(sortedTags[0]);
+      results.push({
+        icon: c.icon,
+        name: c.name,
+        desc: "在你追查的每一段線索裡，都反覆出現同一種傾向：" + c.desc,
+        evidence: buildEvidenceText([sortedTags[0]], raw)
+      });
+    }
+  }
+
+  return { results: results, also: alsoResults, totalTags: pickedTags.length };
+}
+
+function buildAuroraSummary(results) {
+  if (!results || results.length === 0) {
+    return "目前蒐集到的線索還太少，之後可以再多探索幾次，讓線索更清楚一點。";
+  }
+  var names = results.map(function(r) { return "「" + r.name + "」"; }).join("、");
+  var extra = "";
+  if (results.length >= 2) {
+    extra = "值得留意的是，這幾個線索並不是各自獨立——它們背後可能都指向同一件事：你在投入一件事情時，重視的不只是把它做完，而是某一種特定的過程或感覺。";
+  }
+  return "把這幾次選擇放在一起看，Aurora 觀察到的線索是" + names + "。" + extra + "這些比較像是你目前『投入方式』的雛形，而不是最終答案，之後還可以繼續拿不同經驗來驗證。";
+}
+
+var MEDALS = ["🥇", "🥈", "🥉"];
+
+function renderStep4() {
+  if (state.finalClues.length === 0) {
+    state.finalClues = synthesizePassionClues();
+  }
+  var synthesis = state.finalClues;
+  var top = synthesis.results;
+  var also = synthesis.also;
+  var totalCount = top.length + also.length;
+
+  var rankedHtml = "";
+  top.forEach(function(r, i) {
+    rankedHtml +=
+      '<div class="ranked-clue">' +
+        '<span class="rank-num">0' + (i + 1) + '</span>' +
+        '<span class="icon">' + r.icon + '</span>' +
+        '<div><h4>' + r.name + '</h4><p>' + r.desc + '</p>' +
+        (r.evidence ? '<p class="evidence">🔗 ' + r.evidence + '</p>' : '') +
+        '</div>' +
+        '<span class="medal">' + (MEDALS[i] || "") + '</span>' +
+      '</div>';
+  });
+
+  var alsoHtml = "";
+  if (also.length > 0) {
+    var nums = also.map(function(_, i) { return "④⑤".charAt(i); }).join("");
+    var chips = "";
+    also.forEach(function(r, i) {
+      chips += '<div class="also-map-chip"><span class="rk">' + "④⑤".charAt(i) + '</span><span class="nm">' + r.icon + ' ' + r.name + '</span></div>';
+    });
+    alsoHtml =
+      '<div class="map-divider"></div>' +
+      '<div class="also-map-label">' + nums + ' ・ ALSO ON MY MAP</div>' +
+      '<div class="also-map-grid">' + chips + '</div>';
+  }
+
+  var quoteNames = top.map(function(r) { return "「" + r.name + "」"; }).join("、");
+
+  var pairInsight = "";
+  if (top.length >= 2) {
+    pairInsight =
+      '<div class="quote-block"><p style="margin:0;">「' + top[0].name + '」和「' + top[1].name +
+      '」被歸納在一起，或許代表這兩種傾向對你來說常常同時出現，而不是兩件不相關的事。</p></div>';
+  }
+
+  return (
+    renderBrandLogo('<button class="pill-btn" id="btnRestart">🔄 重新探索</button>') +
+
+    '<div class="result-hero">' +
+      '<div class="badge-circle">🔥</div>' +
+      '<div class="mono-label">PERSONAL EMBER ROUTE ・ 0' + Math.max(totalCount, top.length) + '</div>' +
+      '<div class="headline">' + top.length + ' 個熱情線索，<br>一張地圖。</div>' +
+      '<p class="subtitle">不是答案，也不是標籤。只是現在的你，最容易被點燃的樣子。</p>' +
+    '</div>' +
+
+    '<div class="passion-map-card">' +
+      '<div class="map-card-header">' +
+        '<div class="title">未來羅盤<br>・熱情地圖</div>' +
+        '<div class="badge">🔥</div>' +
+      '</div>' +
+      '<div class="map-divider"></div>' +
+      '<div class="map-eyebrow">PERSONAL EMBER CHART</div>' +
+      '<div class="map-headline">這一季，我的熱情座標。</div>' +
+      '<div class="map-stat-line">🔎 已探索 ' + state.selected.length + ' 個活動 ・ 🕵️ 追查 ' + state.step3Queue.length + ' 段線索</div>' +
+      '<div class="map-divider"></div>' +
+      '<div class="map-columns-label"><span>TOP EMBERS</span><span>KEEP CLOSE</span></div>' +
+      rankedHtml +
+      alsoHtml +
+      (quoteNames ? '<div class="map-quote">現在的你，容易被' + quoteNames + '點燃。</div>' : '') +
+      '<div class="map-footer"><span>只記錄現在的線索</span><span class="route">✦ EMBER ROUTE</span></div>' +
+    '</div>' +
+
+    '<div class="aurora-panel">' +
+      '<div class="panel-head">' + OWL_SVG.replace('class="owl-avatar"', 'class="owl-avatar" style="width:36px;height:36px;"') + '<span class="label">AURORA 的觀察</span></div>' +
+      '<p>' + buildAuroraSummary(top) + '</p>' +
+      pairInsight +
+      '<p class="tip-line">🌱 熱情線索也可能隨經驗慢慢改變。這張地圖記錄的不是「你永遠都是這樣」，而是現在的你，做過幾次選擇後，最容易被點燃的地方。</p>' +
+    '</div>' +
+
+    '<div class="footer-actions">' +
+      '<button class="cta" id="btnDownload"><span>下載探索卡</span><span class="arrow">📥</span></button>' +
+    '</div>'
+  );
+}
+
+/* ================= 事件綁定 ================= */
+
+function bindEvents() {
+  bindFlashlight();
+
+  var btnStart = document.getElementById("btnStart");
+  if (btnStart) btnStart.addEventListener("click", function() { state.screen = "howto"; render(); });
+
+  var btnToStep1 = document.getElementById("btnToStep1");
+  if (btnToStep1) btnToStep1.addEventListener("click", function() { state.screen = "step1"; render(); });
+
+  document.querySelectorAll(".tile:not(.disabled)").forEach(function(el) {
+    el.addEventListener("click", function() {
+      var id = el.getAttribute("data-id");
+      var idx = state.selected.indexOf(id);
+      if (idx === -1) { if (state.selected.length < 5) state.selected.push(id); }
+      else { state.selected.splice(idx, 1); }
+      render();
+    });
+  });
+
+  var btnToStep2 = document.getElementById("btnToStep2");
+  if (btnToStep2) btnToStep2.addEventListener("click", function() {
+    state.step2Index = 0;
+    state.screen = "step2";
+    render();
+  });
+
+  document.querySelectorAll(".invest-btn").forEach(function(el) {
+    el.addEventListener("click", function() {
+      var actId = state.selected[state.step2Index];
+      state.investment[actId] = parseInt(el.getAttribute("data-score"), 10);
+      render();
+      setTimeout(function() {
+        if (state.step2Index < state.selected.length - 1) {
+          state.step2Index++;
+          render();
+        } else {
+          var sorted = state.selected.slice().sort(function(a, b) {
+            return (state.investment[b] || 0) - (state.investment[a] || 0);
+          });
+          state.step3Queue = sorted.slice(0, 3);
+          state.step3Index = 0;
+          state.screen = "step3";
+          render();
+        }
+      }, 420);
+    });
+  });
+
+  document.querySelectorAll(".clue-chip").forEach(function(el) {
+    el.addEventListener("click", function() {
+      var actId = state.step3Queue[state.step3Index];
+      var cid = el.getAttribute("data-id");
+      if (!state.clueSelections[actId]) state.clueSelections[actId] = [];
+      var arr = state.clueSelections[actId];
+      var idx = arr.indexOf(cid);
+      if (idx !== -1) { arr.splice(idx, 1); }
+      else if (arr.length < 2) { arr.push(cid); }
+      render();
+    });
+  });
+
+  var btnClueNext = document.getElementById("btnClueNext");
+  if (btnClueNext) btnClueNext.addEventListener("click", function() {
+    if (state.step3Index < state.step3Queue.length - 1) {
+      state.step3Index++;
+      render();
+    } else {
+      state.finalClues = synthesizePassionClues();
+      state.screen = "step4";
+      render();
+    }
+  });
+
+  var btnRestart = document.getElementById("btnRestart");
+  if (btnRestart) btnRestart.addEventListener("click", resetState);
+
+  var btnDownload = document.getElementById("btnDownload");
+  if (btnDownload) btnDownload.addEventListener("click", renderShareCard);
+}
+
+/* ================= 分享卡（canvas 繪製） ================= */
+
+function wrapCanvasText(ctx, text, maxWidth) {
+  var chars = text.split("");
+  var lines = [];
+  var line = "";
+  chars.forEach(function(ch) {
+    var test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line !== "") {
+      lines.push(line);
+      line = ch;
+    } else {
+      line = test;
+    }
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+function renderShareCard() {
+  var W = 640, H = 900;
+  var canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext("2d");
+
+  var grad = ctx.createRadialGradient(W/2, 0, 0, W/2, H*0.4, H*0.9);
+  grad.addColorStop(0, "#1c1730");
+  grad.addColorStop(1, "#0a0a16");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "rgba(255,255,255,0.4)";
+  for (var i = 0; i < 46; i++) {
+    var sx = Math.random() * W, sy = Math.random() * H;
+    ctx.beginPath();
+    ctx.arc(sx, sy, Math.random() * 1.4 + 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.strokeStyle = "rgba(255,157,92,0.35)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(28, 28, W - 56, H - 56);
+
+  ctx.textAlign = "center";
+
+  ctx.font = "11px monospace";
+  ctx.fillStyle = "rgba(232,201,136,0.75)";
+  ctx.fillText("EMBER ROUTE / RESULT CARD", W/2, 70);
+
+  ctx.font = "50px sans-serif";
+  ctx.fillText("🌟", W/2, 128);
+
+  ctx.font = "bold 28px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+  ctx.fillStyle = "#f4efe8";
+  ctx.fillText("我的熱情線索", W/2, 172);
+
+  ctx.font = "13px sans-serif";
+  ctx.fillStyle = "rgba(153,147,171,0.9)";
+  ctx.fillText("未來羅盤．熱情偵探", W/2, 198);
+
+  var y = 255;
+  var shareResults = (state.finalClues && state.finalClues.results) || [];
+  shareResults.forEach(function(r, i) {
+    ctx.textAlign = "left";
+    ctx.font = "10px monospace";
+    ctx.fillStyle = "rgba(232,201,136,0.65)";
+    ctx.fillText("EMBER ROUTE / NODE 0" + (i + 1), 70, y - 18);
+
+    ctx.font = "26px sans-serif";
+    ctx.fillStyle = "#ff9d5c";
+    ctx.fillText(r.icon, 70, y);
+
+    ctx.font = "bold 20px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+    ctx.fillStyle = "#f4efe8";
+    ctx.fillText(r.name, 112, y);
+
+    ctx.font = "14px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+    ctx.fillStyle = "rgba(153,147,171,0.95)";
+    var lines = wrapCanvasText(ctx, r.desc, W - 182);
+    var ly = y + 26;
+    lines.forEach(function(l) {
+      ctx.fillText(l, 112, ly);
+      ly += 20;
+    });
+    y = ly + 32;
+  });
+
+  ctx.textAlign = "center";
+  ctx.font = "bold 14px sans-serif";
+  ctx.fillStyle = "#ff9d5c";
+  ctx.fillText("AURORA 的發現", W/2, y + 12);
+
+  ctx.font = "14px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+  ctx.fillStyle = "#e6e0ee";
+  var summaryLines = wrapCanvasText(ctx, buildAuroraSummary(shareResults), W - 140);
+  var sy = y + 42;
+  summaryLines.forEach(function(l) {
+    ctx.fillText(l, W/2, sy);
+    sy += 22;
+  });
+
+  ctx.font = "11px monospace";
+  ctx.fillStyle = "rgba(153,147,171,0.6)";
+  ctx.fillText("這不是最終答案，是目前找到的線索", W/2, H - 50);
+
+  var dataUrl = canvas.toDataURL("image/png");
+  document.getElementById("shareImg").src = dataUrl;
+  document.getElementById("shareOverlay").classList.add("show");
+}
+
+function closeShare() {
+  document.getElementById("shareOverlay").classList.remove("show");
+}
+
+/* ================= 啟動 ================= */
+
+initStarfield();
+render();
+</script>
+
+</body>
+</html>
