@@ -411,7 +411,7 @@
 
   .share-overlay { position: fixed; inset: 0; background: rgba(3,3,8,0.92); display: none; align-items: center; justify-content: center; z-index: 200; padding: 24px; flex-direction: column; }
   .share-overlay.show { display: flex; }
-  .share-overlay img { max-width: 320px; width: 100%; border-radius: 16px; box-shadow: 0 0 50px rgba(255,157,92,0.2); }
+  .share-overlay img { max-width: 320px; width: auto; max-height: 76vh; object-fit: contain; border-radius: 16px; box-shadow: 0 0 50px rgba(255,157,92,0.2); }
   .share-hint { color: var(--text-dim); font-size: 12px; margin: 16px 0; text-align: center; }
   .share-overlay button { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 9px 26px; font-size: 13px; cursor: pointer; }
 
@@ -1117,7 +1117,23 @@ function wrapCanvasText(ctx, text, maxWidth) {
 }
 
 function renderShareCard() {
-  var W = 640, H = 900;
+  var W = 640;
+  var FONT = "'PingFang TC', 'Microsoft JhengHei', sans-serif";
+  var shareResults = (state.finalClues && state.finalClues.results) || [];
+
+  var m = document.createElement("canvas").getContext("2d");
+  m.font = "14px " + FONT;
+  var items = shareResults.map(function(r) {
+    return { r: r, lines: wrapCanvasText(m, r.desc, W - 190) };
+  });
+  var summaryLines = wrapCanvasText(m, buildAuroraSummary(shareResults), W - 150);
+
+  var headerH = 235;
+  var itemsH = 0;
+  items.forEach(function(it) { itemsH += 22 + 30 + it.lines.length * 22 + 30; });
+  var auroraH = 30 + 28 + summaryLines.length * 24 + 30;
+  var H = Math.max(760, headerH + itemsH + auroraH + 90);
+
   var canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   var ctx = canvas.getContext("2d");
@@ -1125,85 +1141,49 @@ function renderShareCard() {
   var grad = ctx.createRadialGradient(W/2, 0, 0, W/2, H*0.4, H*0.9);
   grad.addColorStop(0, "#1c1730");
   grad.addColorStop(1, "#0a0a16");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
 
   ctx.fillStyle = "rgba(255,255,255,0.4)";
-  for (var i = 0; i < 46; i++) {
-    var sx = Math.random() * W, sy = Math.random() * H;
-    ctx.beginPath();
-    ctx.arc(sx, sy, Math.random() * 1.4 + 0.3, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  for (var i = 0; i < 50; i++) { ctx.beginPath(); ctx.arc(Math.random()*W, Math.random()*H, Math.random()*1.4+0.3, 0, Math.PI*2); ctx.fill(); }
 
-  ctx.strokeStyle = "rgba(255,157,92,0.35)";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255,157,92,0.35)"; ctx.lineWidth = 2;
   ctx.strokeRect(28, 28, W - 56, H - 56);
 
   ctx.textAlign = "center";
-
-  ctx.font = "11px monospace";
-  ctx.fillStyle = "rgba(232,201,136,0.75)";
+  ctx.font = "11px monospace"; ctx.fillStyle = "rgba(232,201,136,0.75)";
   ctx.fillText("EMBER ROUTE / RESULT CARD", W/2, 70);
+  ctx.font = "50px sans-serif"; ctx.fillText("🌟", W/2, 128);
+  ctx.font = "bold 28px " + FONT; ctx.fillStyle = "#f4efe8"; ctx.fillText("我的熱情線索", W/2, 172);
+  ctx.font = "13px " + FONT; ctx.fillStyle = "rgba(153,147,171,0.9)"; ctx.fillText("未來羅盤．熱情偵探", W/2, 198);
 
-  ctx.font = "50px sans-serif";
-  ctx.fillText("🌟", W/2, 128);
-
-  ctx.font = "bold 28px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
-  ctx.fillStyle = "#f4efe8";
-  ctx.fillText("我的熱情線索", W/2, 172);
-
-  ctx.font = "13px sans-serif";
-  ctx.fillStyle = "rgba(153,147,171,0.9)";
-  ctx.fillText("未來羅盤．熱情偵探", W/2, 198);
-
-  var y = 255;
-  var shareResults = (state.finalClues && state.finalClues.results) || [];
-  shareResults.forEach(function(r, i) {
+  var y = headerH;
+  items.forEach(function(it, i) {
     ctx.textAlign = "left";
-    ctx.font = "10px monospace";
-    ctx.fillStyle = "rgba(232,201,136,0.65)";
-    ctx.fillText("EMBER ROUTE / NODE 0" + (i + 1), 70, y - 18);
+    ctx.font = "10px monospace"; ctx.fillStyle = "rgba(232,201,136,0.65)";
+    ctx.fillText("EMBER ROUTE / NODE 0" + (i + 1), 70, y);
+    y += 30;
 
-    ctx.font = "26px sans-serif";
-    ctx.fillStyle = "#ff9d5c";
-    ctx.fillText(r.icon, 70, y);
+    ctx.font = "26px sans-serif"; ctx.fillStyle = "#ff9d5c"; ctx.fillText(it.r.icon, 70, y);
+    ctx.font = "bold 20px " + FONT; ctx.fillStyle = "#f4efe8"; ctx.fillText(it.r.name, 116, y);
+    y += 14;
 
-    ctx.font = "bold 20px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
-    ctx.fillStyle = "#f4efe8";
-    ctx.fillText(r.name, 112, y);
-
-    ctx.font = "14px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
-    ctx.fillStyle = "rgba(153,147,171,0.95)";
-    var lines = wrapCanvasText(ctx, r.desc, W - 182);
-    var ly = y + 26;
-    lines.forEach(function(l) {
-      ctx.fillText(l, 112, ly);
-      ly += 20;
-    });
-    y = ly + 32;
+    ctx.font = "14px " + FONT; ctx.fillStyle = "rgba(165,159,183,0.95)";
+    it.lines.forEach(function(l) { y += 22; ctx.fillText(l, 116, y); });
+    y += 38;
   });
 
+  y += 8;
   ctx.textAlign = "center";
-  ctx.font = "bold 14px sans-serif";
-  ctx.fillStyle = "#ff9d5c";
-  ctx.fillText("AURORA 的發現", W/2, y + 12);
+  ctx.font = "bold 14px sans-serif"; ctx.fillStyle = "#ff9d5c";
+  ctx.fillText("AURORA 的發現", W/2, y);
+  y += 12;
+  ctx.font = "14px " + FONT; ctx.fillStyle = "#e6e0ee";
+  summaryLines.forEach(function(l) { y += 24; ctx.fillText(l, W/2, y); });
 
-  ctx.font = "14px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
-  ctx.fillStyle = "#e6e0ee";
-  var summaryLines = wrapCanvasText(ctx, buildAuroraSummary(shareResults), W - 140);
-  var sy = y + 42;
-  summaryLines.forEach(function(l) {
-    ctx.fillText(l, W/2, sy);
-    sy += 22;
-  });
-
-  ctx.font = "11px monospace";
-  ctx.fillStyle = "rgba(153,147,171,0.6)";
+  ctx.font = "11px " + FONT; ctx.fillStyle = "rgba(153,147,171,0.7)";
   ctx.fillText("這不是最終答案，是目前找到的線索", W/2, H - 50);
 
-  var dataUrl = canvas.toDataURL("image/png");
-  document.getElementById("shareImg").src = dataUrl;
+  document.getElementById("shareImg").src = canvas.toDataURL("image/png");
   document.getElementById("shareOverlay").classList.add("show");
 }
 
