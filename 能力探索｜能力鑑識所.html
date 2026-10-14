@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>能力探索｜能力鑑識所</title>
+<style>
+  :root {
+    --bg: #0b0d13;
+    --panel: #12151e;
+    --panel2: #181c28;
+    --yellow: #ffd23f;
+    --yellow-soft: #ffe68a;
+    --yellow-dim: rgba(255, 210, 63, 0.22);
+    --gold: #e8c988;
+    --paper: #e8d9a6;
+    --paper-dark: #cdb978;
+    --ink: #1d1808;
+    --text: #eef0f4;
+    --dim: #8d94a6;
+    --red: #ff5a5a;
+    --mono: "SFMono-Regular", "JetBrains Mono", "Menlo", "Courier New", monospace;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+
+  body {
+    background:
+      linear-gradient(rgba(255,210,63,0.045) 1px, transparent 1px) 0 0 / 28px 28px,
+      linear-gradient(90deg, rgba(255,210,63,0.045) 1px, transparent 1px) 0 0 / 28px 28px,
+      radial-gradient(ellipse at 50% -10%, #1a1d2b 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    min-height: 100%;
+    overflow-x: hidden;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .scanbeam { position: fixed; left: 0; right: 0; top: -140px; height: 140px; pointer-events: none; z-index: 0;
+    background: linear-gradient(180deg, transparent, rgba(255,210,63,0.07), transparent);
+    animation: beamDown 9s linear infinite; }
+  @keyframes beamDown { from { transform: translateY(0); } to { transform: translateY(calc(100vh + 280px)); } }
+
+  #app {
+    position: relative; z-index: 1;
+    max-width: clamp(320px, 92vw, 440px);
+    margin: 0 auto;
+    padding: clamp(16px, 5vw, 22px) clamp(14px, 5vw, 20px) 44px;
+    min-height: 100dvh;
+    display: flex; flex-direction: column;
+  }
+  @media (min-width: 640px) { #app { max-width: 500px; padding-top: 36px; } .logo-icon { width: 42px; height: 42px; } }
+  @media (min-width: 1024px) { #app { max-width: 540px; padding-top: 52px; } }
+
+  /* ---------- 品牌頁首 ---------- */
+  .logo-row { display: flex; align-items: center; justify-content: space-between; gap: 11px; margin-bottom: 10px; }
+  .logo-left { display: flex; align-items: center; gap: 11px; }
+  .logo-icon { width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .logo-text { display: flex; flex-direction: column; }
+  .logo-text .en { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; color: var(--gold); }
+  .logo-text .zh { font-size: 15px; font-weight: 800; color: var(--text); margin-top: 2px; }
+  .logo-underline { height: 1px; background: linear-gradient(90deg, var(--gold), transparent); opacity: 0.5; margin: 0 0 14px; }
+  .logo-right .pill-btn { background: transparent; border: 1px solid var(--yellow-dim); color: var(--dim); border-radius: 6px; padding: 8px 12px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+
+  /* ---------- 鑑識進度列 ---------- */
+  .tracker { display: flex; gap: 5px; margin: 0 0 16px; }
+  .trk { flex: 1; text-align: center; font-family: var(--mono); font-size: 9px; letter-spacing: 0.04em; color: #5c6275; padding: 6px 0 0; border-top: 3px solid rgba(255,255,255,0.1); }
+  .trk.done { border-color: var(--yellow-dim); color: var(--dim); }
+  .trk.on { border-color: var(--yellow); color: var(--yellow); font-weight: 700; }
+
+  /* ---------- 案件檔案夾 ---------- */
+  .case { position: relative; margin-bottom: 18px; }
+  .case-tab { display: inline-block; background: var(--yellow); color: var(--ink); font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; font-weight: 800; padding: 6px 14px; border-radius: 6px 6px 0 0; }
+  .case-body { position: relative; background: var(--panel); border: 1px solid rgba(255,210,63,0.35); border-radius: 0 8px 8px 8px; padding: 0 18px 22px; overflow: hidden; }
+  .case-body::after { content: ""; position: absolute; right: 8px; bottom: 8px; width: 16px; height: 16px; border-right: 2px solid var(--yellow); border-bottom: 2px solid var(--yellow); opacity: 0.7; }
+  .case-tape { height: 10px; margin: 0 -18px 16px; background: repeating-linear-gradient(-45deg, var(--yellow) 0 10px, #15171e 10px 20px); opacity: 0.92; }
+  .case-q { font-size: 14px; font-weight: 800; color: var(--yellow); margin: 2px 0 12px; display: flex; align-items: center; gap: 8px; }
+  .case-q::before { content: "▌"; color: var(--yellow); }
+
+  .headline { font-size: 24px; font-weight: 900; line-height: 1.32; margin: 0 0 10px; letter-spacing: 0.5px; }
+  .body-copy { font-size: 13px; color: var(--dim); line-height: 1.75; margin: 0 0 4px; }
+
+  /* ---------- 按鈕（硬體按鍵風） ---------- */
+  .cta { display: flex; align-items: center; justify-content: space-between; gap: 9px; width: 100%; border: none; border-radius: 8px; padding: 15px 16px 15px 18px; margin-top: 20px; background: var(--yellow); color: var(--ink); font-weight: 900; font-size: 15px; cursor: pointer; box-shadow: 0 4px 0 #a88a12; transition: transform .08s, box-shadow .08s; }
+  .cta:active { transform: translateY(3px); box-shadow: 0 1px 0 #a88a12; }
+  .cta .arrow { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; background: var(--ink); color: var(--yellow); font-size: 12px; }
+  .cta:disabled { opacity: 0.3; cursor: default; box-shadow: none; }
+  .footer-actions { margin-top: auto; padding-top: 6px; }
+
+  /* ---------- Aurora 現場筆記 ---------- */
+  .aurora-signature { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--yellow-dim); background: rgba(255,210,63,0.04); border-radius: 6px; padding: 12px; margin: 4px 0 20px; position: relative; }
+  .aurora-signature::before { content: ""; position: absolute; top: -6px; left: 18px; width: 38px; height: 12px; background: rgba(255,210,63,0.5); transform: rotate(-3deg); }
+  .owl-avatar { width: 40px; height: 40px; flex-shrink: 0; }
+  .aurora-signature .label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; font-weight: 700; color: var(--yellow); margin-bottom: 4px; display: block; }
+  .aurora-signature p { margin: 0; font-size: 12.5px; line-height: 1.65; color: var(--dim); }
+
+  /* ---------- 首頁 ---------- */
+  .fp-wrap { position: relative; width: 112px; height: 112px; margin: 6px auto 14px; border: 1.5px solid var(--yellow-dim); border-radius: 10px; overflow: hidden; background: rgba(255,210,63,0.04); }
+  .fp-wrap svg { width: 100%; height: 100%; }
+  .fp-scan { position: absolute; left: 0; right: 0; height: 3px; background: var(--yellow); box-shadow: 0 0 12px var(--yellow); animation: fpScan 2.4s ease-in-out infinite; }
+  @keyframes fpScan { 0%,100% { top: 4%; } 50% { top: 94%; } }
+  .home-title { text-align: center; }
+  .home-title .headline { font-size: 28px; margin-bottom: 4px; }
+  .home-title .sub { font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; color: var(--dim); margin-bottom: 16px; }
+  .brief-list { list-style: none; margin: 10px 0 0; padding: 0; }
+  .brief-list li { display: flex; gap: 10px; align-items: baseline; font-size: 12.5px; color: var(--text); padding: 9px 0; border-top: 1px dashed rgba(255,255,255,0.1); }
+  .brief-list li:first-child { border-top: none; }
+  .brief-list .bx { font-family: var(--mono); color: var(--yellow); font-size: 11px; flex-shrink: 0; }
+
+  /* ---------- 玩法介紹 ---------- */
+  .howto-list { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 6px; }
+  .howto-item { display: flex; gap: 12px; align-items: flex-start; border-left: 3px solid var(--yellow); background: rgba(255,255,255,0.03); border-radius: 4px; padding: 11px 12px; }
+  .howto-item .num { font-size: 18px; flex-shrink: 0; }
+  .howto-item h3 { margin: 0 0 3px; font-size: 13px; font-weight: 700; }
+  .howto-item p { margin: 0; font-size: 11.5px; color: var(--dim); line-height: 1.55; }
+
+  /* ---------- STEP1 現場證物 ---------- */
+  .select-count { text-align: center; font-size: 12px; color: var(--dim); margin: 2px 0 12px; font-family: var(--mono); letter-spacing: 0.04em; }
+  .select-count b { color: var(--yellow); }
+  .event-cat { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--yellow); margin: 16px 0 8px; opacity: 0.85; }
+  .event-cat:first-of-type { margin-top: 4px; }
+  .evi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .event-card { position: relative; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 12px 11px 12px; cursor: pointer; min-height: 104px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+  .event-card .tent { align-self: flex-start; background: var(--yellow); color: var(--ink); font-family: var(--mono); font-size: 10px; font-weight: 800; padding: 2px 7px 2px 6px; clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%); }
+  .event-card .icon { font-size: 18px; position: absolute; top: 10px; right: 10px; }
+  .event-card .txt { font-size: 11.5px; font-weight: 600; line-height: 1.5; margin-top: 2px; }
+  .event-card.selected { border-color: var(--yellow); background: rgba(255,210,63,0.1); }
+  .event-card.selected::after { content: "已採證"; position: absolute; right: 6px; bottom: 8px; transform: rotate(-9deg); font-size: 11px; font-weight: 900; color: var(--yellow); border: 2px solid var(--yellow); border-radius: 4px; padding: 1px 6px; letter-spacing: 0.08em; background: rgba(11,13,19,0.7); }
+  .event-card.idk { grid-column: 1 / -1; min-height: 0; flex-direction: row; align-items: center; opacity: 0.85; border-style: dashed; }
+  .event-card.idk .icon { position: static; }
+  .event-card.disabled { opacity: 0.28; pointer-events: none; }
+
+  /* ---------- STEP2 監視器回放 ---------- */
+  .cctv { position: relative; background: #07090d; border: 1px solid rgba(255,210,63,0.4); border-radius: 6px; padding: 12px 14px 14px; margin-bottom: 16px; overflow: hidden; }
+  .cctv::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 3px); pointer-events: none; }
+  .cctv-top { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; color: var(--dim); margin-bottom: 10px; position: relative; }
+  .cctv-top .rec { color: var(--red); font-weight: 700; animation: blink 1.2s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0.25; } }
+  .cctv-event { display: flex; align-items: center; gap: 10px; position: relative; }
+  .cctv-event .icon { font-size: 22px; }
+  .cctv-event .txt { font-size: 13px; font-weight: 700; line-height: 1.5; }
+
+  .action-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+  .action-btn { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border-left: 3px solid rgba(255,210,63,0.25); border-radius: 4px; padding: 11px 12px; cursor: pointer; text-align: left; font-size: 12.5px; font-weight: 600; position: relative; }
+  .action-btn .no { font-family: var(--mono); font-size: 10px; color: var(--yellow); opacity: 0.8; flex-shrink: 0; }
+  .action-btn.picked { border-left-color: var(--yellow); background: rgba(255,210,63,0.12); }
+  .action-btn.picked::after { content: "已記錄"; margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--yellow); }
+  .action-other-input { width: 100%; margin-top: -2px; margin-bottom: 14px; padding: 11px 12px; border-radius: 4px; border: 1px solid var(--yellow); background: #07090d; color: var(--yellow-soft); font-size: 12.5px; font-family: var(--mono); }
+  .followup-label { font-size: 11.5px; color: var(--dim); margin: 4px 0 8px; font-family: var(--mono); }
+  .followup-input { width: 100%; padding: 11px 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); background: #07090d; color: var(--text); font-size: 12.5px; margin-bottom: 4px; font-family: inherit; resize: none; }
+  .followup-input::placeholder { color: #5c6275; }
+
+  /* ---------- STEP3 鑑識掃描 ---------- */
+  .forensic-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--yellow); margin-bottom: 10px; }
+  .forensic-quote { background: rgba(255,255,255,0.04); border-left: 3px solid var(--yellow); border-radius: 4px; padding: 12px 14px; font-size: 13px; line-height: 1.65; margin-bottom: 14px; }
+  .forensic-quote b { color: var(--yellow-soft); }
+  .scan-wrap { margin-bottom: 14px; }
+  .scan-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; color: var(--dim); margin-bottom: 6px; animation: scanLabel 1.2s forwards; }
+  @keyframes scanLabel { 0%, 85% { opacity: 1; } 100% { opacity: 0.35; } }
+  .scan-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+  .scan-bar i { display: block; height: 100%; width: 0; background: var(--yellow); box-shadow: 0 0 10px var(--yellow); animation: scanFill 1.1s ease-out forwards; }
+  @keyframes scanFill { to { width: 100%; } }
+  .reveal-block { opacity: 0; animation: revealUp 0.55s 1.15s forwards; }
+  @keyframes revealUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .found-tag { border: 1px solid var(--yellow); background: rgba(255,210,63,0.08); border-radius: 6px; padding: 14px; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .found-tag .icon { font-size: 34px; }
+  .found-tag .small { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; color: var(--yellow); margin-bottom: 3px; }
+  .found-tag .ability-name { font-size: 18px; font-weight: 900; }
+  .forensic-basis { font-size: 12px; color: var(--dim); line-height: 1.7; background: rgba(255,255,255,0.03); border-radius: 4px; padding: 11px 13px; }
+  .forensic-basis b { color: var(--yellow); font-weight: 700; }
+
+  /* ---------- STEP4 證物標籤 ---------- */
+  .ability-card { position: relative; background: var(--panel2); border: 1px solid rgba(255,210,63,0.3); border-radius: 4px 14px 14px 4px; padding: 14px 14px 14px 18px; margin-bottom: 14px; }
+  .ability-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--yellow); border-radius: 4px 0 0 4px; }
+  .tag-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .tag-top .hole { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--yellow); background: var(--bg); }
+  .tag-top .tag-no { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; color: var(--dim); flex: 1; }
+  .confidence-tag { font-family: var(--mono); font-size: 9px; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 3px; border: 1px dashed rgba(255,255,255,0.25); color: var(--dim); white-space: nowrap; }
+  .confidence-tag.strong { color: var(--ink); background: var(--yellow); border: 1px solid var(--yellow); font-weight: 800; }
+  .ability-card .head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .ability-card .head .icon { font-size: 24px; }
+  .ability-card .head h4 { margin: 0; font-size: 16px; font-weight: 900; }
+  .ability-card p.desc { margin: 0 0 10px; font-size: 12.5px; color: var(--dim); line-height: 1.65; }
+  .ability-card .evidence-box { font-size: 11.5px; color: var(--dim); line-height: 1.6; background: #0b0d13; border-radius: 4px; padding: 9px 11px; margin-bottom: 12px; font-family: inherit; }
+  .ability-card .evidence-box div { margin-bottom: 4px; }
+  .ability-card .evidence-box div:last-child { margin-bottom: 0; }
+  .reaction-row { display: flex; gap: 7px; }
+  .reaction-btn { flex: 1; border: 1px solid rgba(255,255,255,0.18); background: transparent; color: var(--dim); border-radius: 4px; padding: 9px 4px; font-size: 11px; font-weight: 700; cursor: pointer; text-align: center; }
+  .reaction-btn.active-yes { background: var(--yellow); color: var(--ink); border-color: var(--yellow); }
+  .reaction-btn.active-maybe { background: rgba(255,210,63,0.16); color: var(--yellow); border-color: rgba(255,210,63,0.5); }
+
+  /* ---------- STEP5 能力檔案 ---------- */
+  .declass { text-align: center; padding: 4px 0 2px; }
+  .stamp { display: inline-block; font-family: var(--mono); font-weight: 900; letter-spacing: 0.16em; font-size: 13px; color: var(--yellow); border: 3px solid var(--yellow); border-radius: 6px; padding: 6px 16px; transform: rotate(-6deg); margin: 6px 0 14px; animation: stampIn .45s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes stampIn { from { transform: rotate(-6deg) scale(2.2); opacity: 0; } to { transform: rotate(-6deg) scale(1); opacity: 1; } }
+  .declass .headline { font-size: 24px; margin-bottom: 6px; }
+  .declass .subtitle { font-size: 12.5px; color: var(--dim); }
+
+  .dossier { position: relative; margin: 22px 0 18px; }
+  .dossier-tab { display: inline-block; background: var(--paper-dark); color: var(--ink); font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; font-weight: 800; padding: 6px 14px; border-radius: 6px 6px 0 0; }
+  .dossier-paper { background: var(--paper); color: var(--ink); border-radius: 0 6px 6px 6px; padding: 16px 16px 14px; box-shadow: 0 14px 30px rgba(0,0,0,0.4);
+    background-image: repeating-linear-gradient(180deg, transparent 0 25px, rgba(29,24,8,0.07) 25px 26px); }
+  .dp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 12px; }
+  .dp-head .t { font-size: 15px; font-weight: 900; line-height: 1.35; }
+  .dp-head .no { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; text-align: right; opacity: 0.7; line-height: 1.5; }
+  .dp-stat { font-size: 11.5px; opacity: 0.75; margin-bottom: 12px; }
+  .bp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .bp-tile { background: rgba(255,255,255,0.45); border: 1.5px solid var(--ink); border-radius: 4px; padding: 10px 10px 9px; }
+  .bp-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .bp-tile .ic { font-size: 26px; display: block; margin-bottom: 4px; }
+  .bp-tile h4 { margin: 0 0 4px; font-size: 13.5px; font-weight: 900; }
+  .bp-tile p { margin: 0 0 5px; font-size: 11px; line-height: 1.5; opacity: 0.82; }
+  .bp-tile .ev { font-size: 10.5px; line-height: 1.5; border-top: 1px dashed rgba(29,24,8,0.4); padding-top: 5px; opacity: 0.9; }
+  .bp-tile .flag { display: inline-block; margin-top: 5px; font-size: 10px; font-weight: 800; background: var(--ink); color: var(--yellow); padding: 1px 7px; border-radius: 3px; }
+  .dp-foot { display: flex; justify-content: space-between; font-size: 10px; opacity: 0.6; margin-top: 12px; font-family: var(--mono); letter-spacing: 0.06em; }
+
+  .aurora-panel { border: 1px solid var(--yellow-dim); background: rgba(255,210,63,0.04); border-radius: 6px; padding: 16px; margin-bottom: 16px; position: relative; }
+  .aurora-panel::before { content: ""; position: absolute; top: -6px; right: 22px; width: 38px; height: 12px; background: rgba(255,210,63,0.5); transform: rotate(3deg); }
+  .aurora-panel .panel-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .aurora-panel .panel-head .label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; font-weight: 700; color: var(--yellow); }
+  .aurora-panel p { margin: 0 0 11px; font-size: 12.5px; line-height: 1.75; color: var(--dim); }
+  .aurora-panel p:last-child { margin-bottom: 0; }
+  .aurora-panel .tip-line { color: var(--yellow-soft); font-size: 11.8px; opacity: 0.9; }
+
+  /* ---------- 分享卡 overlay ---------- */
+  .share-overlay { position: fixed; inset: 0; background: rgba(3,3,8,0.92); display: none; align-items: center; justify-content: center; z-index: 200; padding: 24px; flex-direction: column; }
+  .share-overlay.show { display: flex; }
+  .share-overlay img { max-width: 320px; width: auto; max-height: 76vh; object-fit: contain; border-radius: 8px; box-shadow: 0 0 50px rgba(255,210,63,0.2); }
+  .share-hint { color: var(--dim); font-size: 12px; margin: 16px 0; text-align: center; }
+  .share-overlay button { background: var(--panel); border: 1px solid var(--yellow-dim); color: var(--text); border-radius: 6px; padding: 9px 26px; font-size: 13px; cursor: pointer; }
+
+  @media (prefers-reduced-motion: reduce) { .scanbeam, .fp-scan, .cctv-top .rec, .scan-bar i, .stamp { animation: none !important; } .scan-bar i { width: 100%; } .reveal-block { opacity: 1; animation: none; } }
+</style>
+</head>
+<body>
+
+<div class="scanbeam"></div>
+<div id="app"></div>
+
+<div class="share-overlay" id="shareOverlay">
+  <img id="shareImg" src="" alt="能力檔案">
+  <div class="share-hint">長按圖片即可儲存到相簿</div>
+  <button onclick="closeShare()">關閉</button>
+</div>
+
+<script>
+/* ================= 資料設定 ================= */
+
+var ABILITIES = [
+  { id: "breakdown", icon: "🧩", name: "問題拆解",   desc: "遇到複雜的事情時，你可能會試著把問題拆成幾個部分，再一步步找出解法。",         next: "下次遇到卡住的任務，可以試著先寫下「這件事可以拆成哪幾步」，再一步步處理。" },
+  { id: "research",  icon: "🔍", name: "資訊蒐集",   desc: "面對不確定的狀況，你可能習慣先去找資料、問清楚，而不是憑感覺猜。",             next: "下次遇到不熟悉的主題，可以試著列出「我還想知道什麼」，再去找答案。" },
+  { id: "creative",  icon: "💡", name: "創意發想",   desc: "你可能容易想出不只一種做法，願意試試看跟別人不一樣的方向。",                   next: "下次遇到問題時，可以試著先想出兩三種不同的解法，再選一個試試看。" },
+  { id: "communicate", icon: "🗣️", name: "溝通表達", desc: "你可能擅長把自己的想法說清楚，或是把混亂的狀況講到大家都聽得懂。",             next: "下次需要跟別人說明狀況時，可以先想好「我想讓對方知道的三件事」。" },
+  { id: "teamwork",  icon: "🤝", name: "合作協調",   desc: "在團隊裡，你可能會留意大家各自在做什麼，試著讓整體合作更順。",                 next: "下次一起做事時，可以主動問一句「大家目前卡在哪裡？」，幫忙串起進度。" },
+  { id: "selfmanage", icon: "🧭", name: "自我管理",  desc: "面對不確定的狀況，你可能會先觀察、評估，再決定什麼時候行動。",                 next: "下次遇到混亂的狀況，可以給自己一分鐘先想清楚「現在該先做什麼」，再動作。" },
+  { id: "organize",  icon: "📋", name: "組織規劃",   desc: "你可能擅長把一團亂的資訊或想法整理成清楚的步驟，讓事情變得好執行。",           next: "下次手上有很多待辦事項時，可以試著先排出先後順序，再開始做。" },
+  { id: "initiative", icon: "🚀", name: "主動行動",  desc: "在還沒有人開口要求之前，你可能就已經先動起來處理狀況了。",                     next: "下次發現有件事該做但沒人做時，可以試著主動說一句「我來處理」。" },
+  { id: "persist",   icon: "💪", name: "持續練習",   desc: "你可能願意花時間重複練習一件事，直到自己比之前更上手。",                       next: "挑一件你還不夠熟練的事，給自己設定一個小小的練習目標。" },
+  { id: "empathy",   icon: "❤️", name: "同理關懷",   desc: "你可能會留意身邊的人的感受或需要，並試著做些什麼讓狀況變好。",                 next: "下次留意到有人看起來不太對勁，可以試著主動關心一句。" },
+  { id: "flexible",  icon: "🔄", name: "彈性調整",   desc: "當原本的方法行不通時，你可能不會卡住太久，而是願意換個方式再試試看。",         next: "下次發現原本的計畫卡住了，可以練習問自己「還有沒有別的做法？」。" },
+  { id: "execute",   icon: "🎯", name: "目標執行",   desc: "你可能擅長把一件事從開始做到完成，不容易半途而廢。",                           next: "下次設定一個目標時，可以試著把它拆成每天都能完成的小步驟。" },
+  { id: "logic",     icon: "🧠", name: "邏輯思考",   desc: "面對混亂的狀況，你可能會試著先想清楚「問題到底出在哪裡」，再決定怎麼做。",     next: "下次遇到問題，可以練習先問自己「真正的原因是什麼」，再想解法。" },
+  { id: "artistic",  icon: "🎨", name: "創造表達",   desc: "你可能喜歡把腦中的想法變成實際看得見、摸得到的東西。",                         next: "找一個最近想做的點子，試著花一點時間把它做出一個簡單的雛形。" },
+  { id: "selflearn", icon: "📚", name: "自主學習",   desc: "遇到不會的事情，你可能會自己想辦法學起來，而不是等別人教。",                   next: "挑一個你好奇但還不會的小技能，給自己安排一小段時間自學看看。" },
+  { id: "handson",   icon: "🛠️", name: "實作解決",   desc: "比起只是想辦法，你可能更習慣直接動手試試看、把問題解決掉。",                   next: "下次遇到需要處理的小狀況，可以練習先動手試一次，而不是只用想的。" }
+];
+function getAbility(id) { for (var i=0;i<ABILITIES.length;i++) if (ABILITIES[i].id===id) return ABILITIES[i]; return null; }
+
+var EVENTS = [
+  { id:"e1",  cat:"校園與學習", icon:"📚", text:"小組合作時，大家不知道該怎麼分工" },
+  { id:"e2",  cat:"校園與學習", icon:"🧩", text:"遇到不懂的題目，自己想辦法找到答案" },
+  { id:"e3",  cat:"校園與學習", icon:"⏰", text:"要在期限內把一件事情做完" },
+  { id:"e4",  cat:"家庭與日常", icon:"🏠", text:"幫忙處理家裡的一件事" },
+  { id:"e5",  cat:"家庭與日常", icon:"🔧", text:"自己學會用一個新的工具或功能" },
+  { id:"e6",  cat:"家庭與日常", icon:"🚨", text:"遇到突發狀況，得想辦法處理" },
+  { id:"e7",  cat:"人際與社交", icon:"🤲", text:"朋友遇到困難的時候，你做了一些事" },
+  { id:"e8",  cat:"人際與社交", icon:"💬", text:"跟別人意見不一樣，需要找到溝通的方式" },
+  { id:"e9",  cat:"人際與社交", icon:"👥", text:"在團體裡，協助大家一起完成一件事" },
+  { id:"e10", cat:"興趣與個人挑戰", icon:"🔬", text:"自己研究一件好奇的事情" },
+  { id:"e11", cat:"興趣與個人挑戰", icon:"🎯", text:"練習一項技能，直到比以前更熟練" },
+  { id:"e12", cat:"興趣與個人挑戰", icon:"🎨", text:"把腦中的想法做成具體的作品" }
+];
+var IDK_EVENT_ID = "idk";
+function getEvent(id) { for (var i=0;i<EVENTS.length;i++) if (EVENTS[i].id===id) return EVENTS[i]; return null; }
+var EVENT_CATS = ["校園與學習","家庭與日常","人際與社交","興趣與個人挑戰"];
+var CAT_LETTER = { "校園與學習":"A", "家庭與日常":"B", "人際與社交":"C", "興趣與個人挑戰":"D" };
+
+var ACTIONS = [
+  { id:"a1", text:"提出一個方法或方向",             abilities:["creative","initiative"] },
+  { id:"a2", text:"先把大家的想法或資訊整理一遍",   abilities:["organize","breakdown"] },
+  { id:"a3", text:"主動去找人討論、問清楚",         abilities:["communicate","teamwork"] },
+  { id:"a4", text:"主動接下該做的部分",             abilities:["initiative","execute"] },
+  { id:"a5", text:"先觀察狀況，等比較清楚再行動",   abilities:["selfmanage","flexible"] },
+  { id:"a6", text:"自己上網或想辦法找答案",         abilities:["research","selflearn"] },
+  { id:"a7", text:"反覆試了好幾次，直到比較順手",   abilities:["persist","handson"] },
+  { id:"a8", text:"把腦中的想法動手做出來",         abilities:["artistic","handson"] },
+  { id:"a9", text:"留意對方的感受，再決定怎麼做",   abilities:["empathy","communicate"] },
+  { id:"a10",text:"先想清楚問題到底出在哪裡",       abilities:["logic","breakdown"] },
+  { id:"other", text:"其他：自己寫下你的做法",      abilities:["initiative","selflearn"] }
+];
+function getAction(id) { for (var i=0;i<ACTIONS.length;i++) if (ACTIONS[i].id===id) return ACTIONS[i]; return null; }
+
+var HOWTO_STEPS = [
+  { icon:"🔍", title:"任務現場", desc:"選幾個你曾經經歷過的生活事件。" },
+  { icon:"📼", title:"任務回放", desc:"回想當時你實際做了什麼。" },
+  { icon:"🕵️", title:"能力鑑識", desc:"從你的行動裡，找出可能展現的能力。" },
+  { icon:"⭐", title:"能力解鎖", desc:"確認這些線索，收進你的能力卡。" },
+  { icon:"🎒", title:"能力背包", desc:"整理成一份屬於你的能力檔案。" }
+];
+var TRACK = [ {k:"step1",ic:"🔍",t:"現場"}, {k:"step2",ic:"📼",t:"回放"}, {k:"step3",ic:"🕵️",t:"鑑識"}, {k:"step4",ic:"⭐",t:"解鎖"}, {k:"step5",ic:"🎒",t:"背包"} ];
+
+var AURORA_LINES = {
+  step1: "每個人都曾經完成過一些不簡單的事。先找出幾個你親身經歷過的現場。",
+  step2: "選項只是幫你回想，沒有標準答案，想到什麼就是什麼。",
+  step3: "原來那個瞬間，也是一種能力在發揮作用。",
+  step4: "這些是目前找到的線索，你可以決定要不要收下它。"
+};
+
+/* ================= 狀態 ================= */
+
+var state = {
+  screen: "home",
+  selectedEvents: [],
+  step2Index: 0,
+  eventAnswers: {},
+  step3Index: 0,
+  step4Cards: [],
+  step4Pool: [],
+  finalBackpack: null
+};
+
+function resetState() {
+  state = { screen: "home", selectedEvents: [], step2Index: 0, eventAnswers: {}, step3Index: 0, step4Cards: [], step4Pool: [], finalBackpack: null };
+  render();
+}
+
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+/* ================= 共用元件 ================= */
+
+var OWL_SVG =
+  '<svg class="owl-avatar" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M10 18 Q17 5 25 15" stroke="#e8c988" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+    '<path d="M50 18 Q43 5 35 15" stroke="#e8c988" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+    '<circle cx="30" cy="32" r="23" fill="#1d2130"/>' +
+    '<ellipse cx="20" cy="29" rx="7.5" ry="8.5" fill="#f4ecd8"/>' +
+    '<ellipse cx="40" cy="29" rx="7.5" ry="8.5" fill="#f4ecd8"/>' +
+    '<circle cx="20" cy="30" r="3.3" fill="#ffd23f"/>' +
+    '<circle cx="40" cy="30" r="3.3" fill="#ffd23f"/>' +
+    '<path d="M30 35 L25.5 42 L34.5 42 Z" fill="#e8c988"/>' +
+  '</svg>';
+
+function renderTracker() {
+  var idx = -1;
+  TRACK.forEach(function(t, i) { if (t.k === state.screen) idx = i; });
+  if (idx === -1) return "";
+  var html = '<div class="tracker">';
+  TRACK.forEach(function(t, i) {
+    var cls = i < idx ? "trk done" : (i === idx ? "trk on" : "trk");
+    html += '<div class="' + cls + '">' + t.ic + ' ' + (i + 1) + '/5<br>' + t.t + '</div>';
+  });
+  return html + '</div>';
+}
+
+function renderBrandLogo(rightHtml) {
+  return (
+    '<div class="logo-row">' +
+      '<div class="logo-left">' +
+        '<div class="logo-icon">🚀</div>' +
+        '<div class="logo-text"><span class="en">FUTURE COMPASS</span><span class="zh">未來羅盤</span></div>' +
+      '</div>' +
+      (rightHtml ? '<div class="logo-right">' + rightHtml + '</div>' : '') +
+    '</div>' +
+    '<div class="logo-underline"></div>' +
+    renderTracker()
+  );
+}
+
+// 案件檔案夾：分頁籤＋警戒膠帶＋內容區
+function cardOpen(eyebrowIcon, eyebrowText, routeLabel, badgeIcon) {
+  return (
+    '<div class="case">' +
+      '<div class="case-tab">' + routeLabel + '</div>' +
+      '<div class="case-body">' +
+        '<div class="case-tape"></div>' +
+        '<div class="case-q">' + eyebrowIcon + ' ' + eyebrowText + '</div>'
+  );
+}
+var CARD_CLOSE = '</div></div>';
+
+function auroraSignature(label, text) {
+  return (
+    '<div class="aurora-signature">' + OWL_SVG +
+      '<div><span class="label">AURORA ▸ ' + label + '</span><p>' + text + '</p></div>' +
+    '</div>'
+  );
+}
+
+/* ================= 畫面渲染 ================= */
+
+function render() {
+  var app = document.getElementById("app");
+  var html = "";
+  if (state.screen === "home") html = renderHome();
+  else if (state.screen === "howto") html = renderHowto();
+  else if (state.screen === "step1") html = renderStep1();
+  else if (state.screen === "step2") html = renderStep2();
+  else if (state.screen === "step3") html = renderStep3();
+  else if (state.screen === "step4") html = renderStep4();
+  else if (state.screen === "step5") html = renderStep5();
+  app.innerHTML = html;
+  window.scrollTo(0, 0);
+  bindEvents();
+}
+
+var FP_SVG =
+  '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ffd23f" stroke-linecap="round">' +
+    '<path d="M22 60 Q20 30 50 22 Q80 30 78 60" stroke-width="2" opacity="0.9"/>' +
+    '<path d="M30 66 Q28 38 50 31 Q72 38 70 66" stroke-width="2" opacity="0.8"/>' +
+    '<path d="M38 72 Q36 46 50 40 Q64 46 62 72" stroke-width="2" opacity="0.7"/>' +
+    '<path d="M44 78 Q43 54 50 49 Q57 54 56 78" stroke-width="2" opacity="0.6"/>' +
+    '<path d="M50 56 L50 82" stroke-width="2" opacity="0.5"/>' +
+    '<path d="M16 72 Q14 36 50 15 Q86 36 84 72" stroke-width="1.5" stroke-dasharray="3 5" opacity="0.5"/>' +
+  '</svg>';
+
+function renderHome() {
+  return (
+    renderBrandLogo() +
+    cardOpen("⭐", "你曾經做到什麼？", "CASE FILE · START HERE", "🕵️") +
+      '<div class="fp-wrap">' + FP_SVG + '<div class="fp-scan"></div></div>' +
+      '<div class="home-title"><div class="headline">能力鑑識所</div><div class="sub">ABILITY FORENSICS LAB</div></div>' +
+      '<p class="body-copy">不是要你說出自己擅長什麼。我們會回放幾個你真的經歷過的生活現場，從你實際做過的行動裡，找出能力存在的證據。</p>' +
+      '<ul class="brief-list">' +
+        '<li><span class="bx">[01]</span>約 3～5 分鐘，像偵探一樣回放現場</li>' +
+        '<li><span class="bx">[02]</span>12 個現場，挑 2～3 個你親身經歷過的</li>' +
+        '<li><span class="bx">[03]</span>沒有標準答案，也可以不同意系統的判斷</li>' +
+      '</ul>' +
+      '<button class="cta" id="btnStart"><span>開始採證</span><span class="arrow">▶</span></button>' +
+    CARD_CLOSE +
+    auroraSignature("出勤提醒", "先不用想自己厲不厲害，只要想「我真的做過這件事」就好。")
+  );
+}
+
+function renderHowto() {
+  var items = "";
+  HOWTO_STEPS.forEach(function(s, i) {
+    items += '<div class="howto-item"><span class="num">' + s.icon + '</span><div><h3>STEP ' + (i+1) + '｜' + s.title + '</h3><p>' + s.desc + '</p></div></div>';
+  });
+  return (
+    renderBrandLogo() +
+    cardOpen("📖", "鑑識流程說明", "CASE FILE · BRIEFING", "📡") +
+      '<p class="body-copy" style="margin-bottom:14px;">整個鑑識大約 3～5 分鐘，五個階段，像偵探一樣回放現場、找線索。</p>' +
+      '<div class="howto-list">' + items + '</div>' +
+      '<button class="cta" id="btnToStep1"><span>我準備好了</span><span class="arrow">▶</span></button>' +
+    CARD_CLOSE
+  );
+}
+
+function renderStep1() {
+  var count = state.selectedEvents.length;
+  var max = 3;
+  var html = "";
+  EVENT_CATS.forEach(function(cat) {
+    html += '<div class="event-cat">▎' + cat + '</div><div class="evi-grid">';
+    EVENTS.filter(function(e){ return e.cat === cat; }).forEach(function(e, n) {
+      var isSel = state.selectedEvents.indexOf(e.id) !== -1;
+      var disabled = (!isSel && count >= max) ? " disabled" : "";
+      html += '<div class="event-card' + (isSel ? " selected" : "") + disabled + '" data-id="' + e.id + '">' +
+                '<span class="tent">' + CAT_LETTER[cat] + (n + 1) + '</span>' +
+                '<span class="icon">' + e.icon + '</span>' +
+                '<span class="txt">' + e.text + '</span>' +
+              '</div>';
+    });
+    html += '</div>';
+  });
+  var idkSel = state.selectedEvents.indexOf(IDK_EVENT_ID) !== -1;
+  var idkDisabled = (!idkSel && count >= max) ? " disabled" : "";
+  html += '<div class="event-cat">▎其他</div><div class="evi-grid"><div class="event-card idk' + (idkSel ? " selected" : "") + idkDisabled + '" data-id="' + IDK_EVENT_ID + '">' +
+            '<span class="icon">🤷</span><span class="txt">這些我目前都還沒特別遇過</span>' +
+          '</div></div>';
+
+  var realCount = state.selectedEvents.filter(function(id){ return id !== IDK_EVENT_ID; }).length;
+  var canProceed = realCount >= 2;
+
+  return (
+    renderBrandLogo() +
+    cardOpen("🔍", "哪些現場，你曾經在場？", "CASE FILE · NODE 01", "🔍") +
+      '<p class="body-copy">點選 2～3 張證物卡，代表你親身經歷過的現場。</p>' +
+      '<div class="select-count" style="margin-top:12px;">已採證 <b>' + realCount + ' / 2～3</b></div>' +
+      html +
+      '<button class="cta" id="btnToStep2" ' + (canProceed ? "" : "disabled") + '><span>開始回放</span><span class="arrow">▶</span></button>' +
+    CARD_CLOSE +
+    auroraSignature("現場勘查", AURORA_LINES.step1)
+  );
+}
+
+function currentRealEvents() {
+  return state.selectedEvents.filter(function(id){ return id !== IDK_EVENT_ID; });
+}
+
+function renderStep2() {
+  var realEvents = currentRealEvents();
+  var eventId = realEvents[state.step2Index];
+  var ev = getEvent(eventId);
+  var answer = state.eventAnswers[eventId] || {};
+
+  var actionHtml = "";
+  ACTIONS.forEach(function(a, i) {
+    var picked = answer.actionId === a.id;
+    actionHtml += '<div class="action-btn' + (picked ? " picked" : "") + '" data-id="' + a.id + '"><span class="no">' + pad2(i + 1) + '</span><span>' + a.text + '</span></div>';
+  });
+
+  var otherBox = "";
+  if (answer.actionId === "other") {
+    otherBox = '<input type="text" class="action-other-input" id="otherInput" placeholder="> 打字描述你當時做了什麼…" value="' + (answer.otherText ? answer.otherText.replace(/"/g,'&quot;') : "") + '">';
+  }
+
+  var canNext = !!answer.actionId && (answer.actionId !== "other" || (answer.otherText && answer.otherText.trim() !== ""));
+
+  return (
+    renderBrandLogo() +
+    cardOpen("📼", "回放當時的畫面", "CASE FILE · NODE 02", "📼") +
+      '<div class="cctv">' +
+        '<div class="cctv-top"><span class="rec">● REC</span><span>CAM ' + pad2(state.step2Index + 1) + ' ▏REPLAY 00:0' + (state.step2Index + 1) + ':24</span></div>' +
+        '<div class="cctv-event"><span class="icon">' + ev.icon + '</span><span class="txt">' + ev.text + '</span></div>' +
+      '</div>' +
+      '<p class="body-copy" style="margin-bottom:10px;">當時你做了什麼？選一條最接近的紀錄（沒有標準答案）。</p>' +
+      '<div class="action-list">' + actionHtml + '</div>' +
+      otherBox +
+      '<div class="followup-label">// 後來呢？發生了什麼改變？（可以不填）</div>' +
+      '<textarea class="followup-input" id="followupInput" rows="2" placeholder="簡單打幾個字也可以…">' + (answer.followup || "") + '</textarea>' +
+      '<div class="select-count" style="margin-top:10px;">現場 ' + (state.step2Index + 1) + ' / ' + realEvents.length + '</div>' +
+      '<button class="cta" id="btnStep2Next" ' + (canNext ? "" : "disabled") + '><span>' +
+        (state.step2Index === realEvents.length - 1 ? "前往能力鑑識" : "下一個現場") +
+      '</span><span class="arrow">▶</span></button>' +
+    CARD_CLOSE +
+    auroraSignature("回放筆記", AURORA_LINES.step2)
+  );
+}
+
+function renderStep3() {
+  var realEvents = currentRealEvents();
+  var eventId = realEvents[state.step3Index];
+  var ev = getEvent(eventId);
+  var answer = state.eventAnswers[eventId] || {};
+  var action = getAction(answer.actionId);
+  var actionText = answer.actionId === "other" ? (answer.otherText || "你描述的做法") : action.text;
+  var primaryAbility = getAbility(action.abilities[0]);
+
+  return (
+    renderBrandLogo() +
+    cardOpen("🕵️", "發現一個行動線索", "CASE FILE · NODE 03", "🕵️") +
+      '<div class="forensic-label">CASE ' + pad2(state.step3Index + 1) + ' ・ ' + ev.icon + ' ' + ev.text + '</div>' +
+      '<div class="forensic-quote">當時你<b>' + actionText + '</b>。</div>' +
+      '<div class="scan-wrap"><div class="scan-label">SCANNING EVIDENCE…</div><div class="scan-bar"><i></i></div></div>' +
+      '<div class="reveal-block">' +
+        '<div class="found-tag"><span class="icon">' + primaryAbility.icon + '</span><div><div class="small">可能展現的能力</div><div class="ability-name">' + primaryAbility.name + '</div></div></div>' +
+        '<div class="forensic-basis"><b>📌 鑑識依據：</b>你不只是經歷了這件事，而是實際做出了「' + actionText + '」這個行動，這可能正是' + primaryAbility.name + '的線索。</div>' +
+        '<button class="cta" id="btnForensicNext"><span>' +
+          (state.step3Index === realEvents.length - 1 ? "整理能力線索" : "下一個線索") +
+        '</span><span class="arrow">▶</span></button>' +
+      '</div>' +
+    CARD_CLOSE +
+    auroraSignature("鑑識筆記", AURORA_LINES.step3)
+  );
+}
+
+function computeAbilitySignal() {
+  var tally = {};
+  var evidence = {};
+  currentRealEvents().forEach(function(eventId) {
+    var ev = getEvent(eventId);
+    var answer = state.eventAnswers[eventId] || {};
+    var action = getAction(answer.actionId);
+    if (!action) return;
+    var actionText = answer.actionId === "other" ? (answer.otherText || "你描述的做法") : action.text;
+    action.abilities.forEach(function(abId) {
+      tally[abId] = (tally[abId] || 0) + 1;
+      if (!evidence[abId]) evidence[abId] = [];
+      evidence[abId].push({ eventIcon: ev.icon, eventText: ev.text, actionText: actionText });
+    });
+  });
+  return { tally: tally, evidence: evidence };
+}
+
+function buildEvidenceLines(abilityId, signal) {
+  var list = signal.evidence[abilityId] || [];
+  return list.map(function(e) {
+    return e.eventIcon + ' 「' + e.eventText + '」裡，你' + e.actionText + '。';
+  });
+}
+
+function renderStep4() {
+  if (state.step4Cards.length === 0) {
+    var sig0 = computeAbilitySignal();
+    var ranked = Object.keys(sig0.tally).sort(function(a,b){ return sig0.tally[b]-sig0.tally[a]; });
+    var showCount = Math.min(4, ranked.length);
+    state.step4Cards = ranked.slice(0, showCount).map(function(id){ return { abilityId: id, reaction: null }; });
+    state.step4Pool = ranked.slice(showCount);
+  }
+  var signal = computeAbilitySignal();
+
+  var cardsHtml = "";
+  state.step4Cards.forEach(function(card, idx) {
+    var ab = getAbility(card.abilityId);
+    var count = signal.tally[card.abilityId] || 1;
+    var confClass = count >= 2 ? " strong" : "";
+    var confText = count >= 2 ? "多次線索佐證" : "初步線索";
+    var evHtml = buildEvidenceLines(card.abilityId, signal).map(function(l){ return '<div>' + l + '</div>'; }).join("");
+
+    cardsHtml +=
+      '<div class="ability-card" data-idx="' + idx + '">' +
+        '<div class="tag-top"><span class="hole"></span><span class="tag-no">EVIDENCE TAG #' + pad2(idx + 1) + '</span><span class="confidence-tag' + confClass + '">' + confText + '</span></div>' +
+        '<div class="head"><span class="icon">' + ab.icon + '</span><h4>' + ab.name + '</h4></div>' +
+        '<p class="desc">' + ab.desc + '</p>' +
+        '<div class="evidence-box">' + evHtml + '</div>' +
+        '<div class="reaction-row">' +
+          '<button class="reaction-btn' + (card.reaction === "yes" ? " active-yes" : "") + '" data-act="yes" data-idx="' + idx + '">✨ 很符合我</button>' +
+          '<button class="reaction-btn' + (card.reaction === "maybe" ? " active-maybe" : "") + '" data-act="maybe" data-idx="' + idx + '">🤔 有一點像</button>' +
+          '<button class="reaction-btn" data-act="swap" data-idx="' + idx + '">🔄 換一個</button>' +
+        '</div>' +
+      '</div>';
+  });
+
+  return (
+    renderBrandLogo() +
+    cardOpen("⭐", "確認你的能力線索", "CASE FILE · NODE 04", "⭐") +
+      '<p class="body-copy" style="margin-bottom:14px;">這些是從你的行動裡找到的證物，不一定全部都要接受，你可以自己判斷。</p>' +
+      cardsHtml +
+      '<button class="cta" id="btnToStep5"><span>收進能力背包</span><span class="arrow">🎒</span></button>' +
+    CARD_CLOSE +
+    auroraSignature("鑑識小提醒", AURORA_LINES.step4)
+  );
+}
+
+function buildAuroraBackpackSummary(cards, signal) {
+  if (!cards || cards.length === 0) {
+    return "目前蒐集到的線索還太少，之後可以再多回放幾個現場，讓線索更清楚一點。";
+  }
+  var names = cards.map(function(c){ return "「" + getAbility(c.abilityId).name + "」"; }).join("、");
+  var multiCount = cards.filter(function(c){ return (signal.tally[c.abilityId]||1) >= 2; }).length;
+  var extra = multiCount > 0
+    ? "其中有幾項能力，是在不只一個現場裡都出現了類似的行動，這讓這些線索更值得留意。"
+    : "這些目前都還是初步線索，之後可以在不同的事件裡繼續觀察，看看它們會不會重複出現。";
+  return "Aurora 把你回放的這幾個現場放在一起看，發現你曾經在不同情境裡，展現出" + names + "這些行動線索。" + extra + "原來那些你覺得只是順手做的小事，也可能是值得珍惜的能力證據。";
+}
+
+function firstEvidenceShort(abilityId, signal) {
+  var list = signal.evidence[abilityId] || [];
+  if (list.length === 0) return "";
+  var e = list[0];
+  var s = e.eventIcon + ' 在「' + e.eventText + '」裡，你' + e.actionText + '。';
+  if (list.length > 1) s += '（另有 ' + (list.length - 1) + ' 個現場也有類似線索）';
+  return s;
+}
+
+function renderStep5() {
+  if (!state.finalBackpack) {
+    state.finalBackpack = { cards: state.step4Cards.slice() };
+  }
+  var signal = computeAbilitySignal();
+  var cards = state.finalBackpack.cards;
+  var totalEvents = currentRealEvents().length;
+
+  var tiles = "";
+  cards.forEach(function(c) {
+    var ab = getAbility(c.abilityId);
+    var flag = c.reaction === "yes" ? "✨ 很符合我" : (c.reaction === "maybe" ? "🤔 有一點像我" : "");
+    tiles += '<div class="bp-tile"><span class="ic">' + ab.icon + '</span><h4>' + ab.name + '</h4><p>' + ab.desc + '</p>' +
+      '<div class="ev">' + firstEvidenceShort(c.abilityId, signal) + '</div>' +
+      (flag ? '<span class="flag">' + flag + '</span>' : '') + '</div>';
+  });
+
+  var topAbility = cards.length > 0 ? getAbility(cards[0].abilityId) : null;
+
+  return (
+    renderBrandLogo('<button class="pill-btn" id="btnRestart">🔄 重新鑑識</button>') +
+
+    '<div class="declass">' +
+      '<div class="stamp">已解封 ・ DECLASSIFIED</div>' +
+      '<div class="headline">你的能力檔案</div>' +
+      '<p class="subtitle">不是能力上限，只是目前找到的證據。</p>' +
+    '</div>' +
+
+    '<div class="dossier">' +
+      '<div class="dossier-tab">PERSONAL ABILITY FILE</div>' +
+      '<div class="dossier-paper">' +
+        '<div class="dp-head"><div class="t">未來羅盤<br>能力鑑識檔案</div><div class="no">FILE NO.<br>FC-ABL / ' + pad2(cards.length) + '</div></div>' +
+        '<div class="dp-stat">🔍 回放 ' + totalEvents + ' 個現場 ・ 🕵️ 鑑識出 ' + cards.length + ' 項能力線索</div>' +
+        '<div class="bp-grid">' + tiles + '</div>' +
+        '<div class="dp-foot"><span>目前的線索，不是能力上限</span><span>✦ FORENSIC LAB</span></div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="aurora-panel">' +
+      '<div class="panel-head">' + OWL_SVG.replace('class="owl-avatar"', 'class="owl-avatar" style="width:34px;height:34px;"') + '<span class="label">AURORA ▸ 鑑識總結</span></div>' +
+      '<p>' + buildAuroraBackpackSummary(cards, signal) + '</p>' +
+      (topAbility ? '<p class="tip-line">🌱 下一步：' + topAbility.next + '</p>' : '') +
+      '<p class="tip-line">這些是目前找到的能力證據，不是你的能力上限。你還有很多技能等著被發現！</p>' +
+    '</div>' +
+
+    '<div class="footer-actions">' +
+      '<button class="cta" id="btnDownload"><span>下載能力檔案</span><span class="arrow">📥</span></button>' +
+    '</div>'
+  );
+}
+
+/* ================= 事件綁定 ================= */
+
+function bindEvents() {
+  var btnStart = document.getElementById("btnStart");
+  if (btnStart) btnStart.addEventListener("click", function(){ state.screen="howto"; render(); });
+
+  var btnToStep1 = document.getElementById("btnToStep1");
+  if (btnToStep1) btnToStep1.addEventListener("click", function(){ state.screen="step1"; render(); });
+
+  document.querySelectorAll(".event-card:not(.disabled)").forEach(function(el) {
+    el.addEventListener("click", function() {
+      var id = el.getAttribute("data-id");
+      var y = window.scrollY;
+      var idx = state.selectedEvents.indexOf(id);
+      if (idx === -1) { if (state.selectedEvents.length < 3) state.selectedEvents.push(id); }
+      else { state.selectedEvents.splice(idx, 1); }
+      render();
+      window.scrollTo(0, y);
+    });
+  });
+
+  var btnToStep2 = document.getElementById("btnToStep2");
+  if (btnToStep2) btnToStep2.addEventListener("click", function() {
+    state.step2Index = 0;
+    state.screen = "step2";
+    render();
+  });
+
+  document.querySelectorAll(".action-btn").forEach(function(el) {
+    el.addEventListener("click", function() {
+      var realEvents = currentRealEvents();
+      var eventId = realEvents[state.step2Index];
+      var actionId = el.getAttribute("data-id");
+      var y = window.scrollY;
+      if (!state.eventAnswers[eventId]) state.eventAnswers[eventId] = {};
+      state.eventAnswers[eventId].actionId = actionId;
+      render();
+      window.scrollTo(0, y);
+    });
+  });
+
+  var otherInput = document.getElementById("otherInput");
+  if (otherInput) {
+    otherInput.addEventListener("input", function() {
+      var realEvents = currentRealEvents();
+      var eventId = realEvents[state.step2Index];
+      state.eventAnswers[eventId].otherText = otherInput.value;
+      var btn = document.getElementById("btnStep2Next");
+      if (btn) btn.disabled = otherInput.value.trim() === "";
+    });
+  }
+
+  var followupInput = document.getElementById("followupInput");
+  if (followupInput) {
+    followupInput.addEventListener("input", function() {
+      var realEvents = currentRealEvents();
+      var eventId = realEvents[state.step2Index];
+      if (!state.eventAnswers[eventId]) state.eventAnswers[eventId] = {};
+      state.eventAnswers[eventId].followup = followupInput.value;
+    });
+  }
+
+  var btnStep2Next = document.getElementById("btnStep2Next");
+  if (btnStep2Next) btnStep2Next.addEventListener("click", function() {
+    var realEvents = currentRealEvents();
+    if (state.step2Index < realEvents.length - 1) {
+      state.step2Index++;
+      render();
+    } else {
+      state.step3Index = 0;
+      state.screen = "step3";
+      render();
+    }
+  });
+
+  var btnForensicNext = document.getElementById("btnForensicNext");
+  if (btnForensicNext) btnForensicNext.addEventListener("click", function() {
+    var realEvents = currentRealEvents();
+    if (state.step3Index < realEvents.length - 1) {
+      state.step3Index++;
+      render();
+    } else {
+      state.screen = "step4";
+      render();
+    }
+  });
+
+  document.querySelectorAll(".reaction-btn").forEach(function(el) {
+    el.addEventListener("click", function() {
+      var idx = parseInt(el.getAttribute("data-idx"), 10);
+      var act = el.getAttribute("data-act");
+      var y = window.scrollY;
+      if (act === "swap") {
+        if (state.step4Pool.length > 0) {
+          var nextId = state.step4Pool.shift();
+          state.step4Cards[idx] = { abilityId: nextId, reaction: null };
+        }
+      } else {
+        state.step4Cards[idx].reaction = (state.step4Cards[idx].reaction === act) ? null : act;
+      }
+      render();
+      window.scrollTo(0, y);
+    });
+  });
+
+  var btnToStep5 = document.getElementById("btnToStep5");
+  if (btnToStep5) btnToStep5.addEventListener("click", function() {
+    state.finalBackpack = null;
+    state.screen = "step5";
+    render();
+  });
+
+  var btnRestart = document.getElementById("btnRestart");
+  if (btnRestart) btnRestart.addEventListener("click", resetState);
+
+  var btnDownload = document.getElementById("btnDownload");
+  if (btnDownload) btnDownload.addEventListener("click", renderShareCard);
+}
+
+/* ================= 分享卡（canvas 繪製，動態高度） ================= */
+
+function wrapCanvasText(ctx, text, maxWidth) {
+  var chars = text.split("");
+  var lines = [];
+  var line = "";
+  chars.forEach(function(ch) {
+    var test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line !== "") { lines.push(line); line = ch; }
+    else { line = test; }
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+function renderShareCard() {
+  var W = 640;
+  var FONT = "'PingFang TC', 'Microsoft JhengHei', sans-serif";
+  var signal = computeAbilitySignal();
+  var cards = (state.finalBackpack && state.finalBackpack.cards) || [];
+
+  var m = document.createElement("canvas").getContext("2d");
+  m.font = "14px " + FONT;
+  var items = cards.map(function(c) {
+    var ab = getAbility(c.abilityId);
+    return { ab: ab, lines: wrapCanvasText(m, ab.desc, W - 190), ev: wrapCanvasText(m, firstEvidenceShort(c.abilityId, signal), W - 190) };
+  });
+  var summaryLines = wrapCanvasText(m, buildAuroraBackpackSummary(cards, signal), W - 150);
+
+  var headerH = 250;
+  var itemsH = 0;
+  items.forEach(function(it) { itemsH += 22 + 30 + (it.lines.length + it.ev.length) * 22 + 44; });
+  var auroraH = 30 + 28 + summaryLines.length * 24 + 30;
+  var H = Math.max(780, headerH + itemsH + auroraH + 90);
+
+  var canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#0b0d13"; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = "rgba(255,210,63,0.05)"; ctx.lineWidth = 1;
+  for (var gx = 0; gx < W; gx += 28) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+  for (var gy = 0; gy < H; gy += 28) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+
+  // 警戒膠帶
+  ctx.save();
+  ctx.beginPath(); ctx.rect(28, 28, W - 56, 14); ctx.clip();
+  for (var sx = 20; sx < W; sx += 28) {
+    ctx.fillStyle = "#ffd23f";
+    ctx.beginPath(); ctx.moveTo(sx, 42); ctx.lineTo(sx + 14, 42); ctx.lineTo(sx + 28, 28); ctx.lineTo(sx + 14, 28); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.strokeStyle = "rgba(255,210,63,0.45)"; ctx.lineWidth = 2;
+  ctx.strokeRect(28, 28, W - 56, H - 56);
+
+  ctx.textAlign = "center";
+  ctx.font = "11px monospace"; ctx.fillStyle = "rgba(232,201,136,0.8)";
+  ctx.fillText("FC-ABL / PERSONAL ABILITY FILE", W/2, 78);
+
+  ctx.save();
+  ctx.translate(W/2, 122); ctx.rotate(-0.1);
+  ctx.strokeStyle = "#ffd23f"; ctx.lineWidth = 3;
+  ctx.strokeRect(-110, -20, 220, 40);
+  ctx.font = "bold 16px monospace"; ctx.fillStyle = "#ffd23f";
+  ctx.fillText("DECLASSIFIED 已解封", 0, 6);
+  ctx.restore();
+
+  ctx.font = "bold 28px " + FONT; ctx.fillStyle = "#f4efe8"; ctx.fillText("我的能力檔案", W/2, 190);
+  ctx.font = "13px " + FONT; ctx.fillStyle = "rgba(141,148,166,0.95)"; ctx.fillText("未來羅盤．能力鑑識所", W/2, 216);
+
+  var y = headerH;
+  items.forEach(function(it, i) {
+    ctx.textAlign = "left";
+    ctx.font = "10px monospace"; ctx.fillStyle = "rgba(232,201,136,0.75)";
+    ctx.fillText("EVIDENCE TAG #0" + (i + 1), 70, y);
+    y += 30;
+
+    ctx.font = "26px sans-serif"; ctx.fillStyle = "#ffd23f"; ctx.fillText(it.ab.icon, 70, y);
+    ctx.font = "bold 20px " + FONT; ctx.fillStyle = "#f4efe8"; ctx.fillText(it.ab.name, 116, y);
+    y += 14;
+
+    ctx.font = "14px " + FONT; ctx.fillStyle = "rgba(160,168,186,0.95)";
+    it.lines.forEach(function(l) { y += 22; ctx.fillText(l, 116, y); });
+    ctx.fillStyle = "rgba(255,230,138,0.85)";
+    it.ev.forEach(function(l) { y += 22; ctx.fillText(l, 116, y); });
+    y += 30;
+  });
+
+  y += 8;
+  ctx.textAlign = "center";
+  ctx.font = "bold 14px sans-serif"; ctx.fillStyle = "#ffd23f";
+  ctx.fillText("AURORA ▸ 鑑識總結", W/2, y);
+  y += 12;
+  ctx.font = "14px " + FONT; ctx.fillStyle = "#e6eaee";
+  summaryLines.forEach(function(l) { y += 24; ctx.fillText(l, W/2, y); });
+
+  ctx.font = "11px " + FONT; ctx.fillStyle = "rgba(141,148,166,0.75)";
+  ctx.fillText("這些是目前找到的能力證據，不是你的能力上限", W/2, H - 50);
+
+  document.getElementById("shareImg").src = canvas.toDataURL("image/png");
+  document.getElementById("shareOverlay").classList.add("show");
+}
+
+function closeShare() { document.getElementById("shareOverlay").classList.remove("show"); }
+
+/* ================= 啟動 ================= */
+
+render();
+</script>
+
+</body>
+</html>
