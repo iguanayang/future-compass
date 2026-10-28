@@ -437,15 +437,17 @@ function share(){
   var support = S.dcare.map(function(i){ return dimOf(i).name; });
   if (care.length) support.push("一年後要照顧：" + care.join("、"));
   S.dhelp.forEach(function(i){ support.push("需要幫忙：" + dimOf(i).name); });
-  var blocks = [
+  // 空白的項目直接省略，避免「尚未選擇」「留白」這類填充文字被 AI 當成學生寫的內容
+  var raw = [
     {h:"1️⃣ 我想過的生活",t:lifeDesc()},
-    {h:"2️⃣ 我最不想失去的",t:keeps().map(function(k){return k.label;}).join("、")||"尚未選擇"},
-    {h:"3️⃣ 最重要的，和需要的支持",t:support.join("、")||"尚未選擇"},
-    {h:"4️⃣ 我發現還缺的",t:gapObjs().map(function(g){return g.label;}).join("、")||"尚未選擇"},
-    {h:"5️⃣ 我這星期想試的小任務",t:taskText()||"尚未選擇，也沒關係"},
-    {h:"6️⃣ 給未來自己的話",t:S.letter.trim()||"（留白也是一種選擇）"},
+    {h:"2️⃣ 我最不想失去的",t:keeps().map(function(k){return k.label;}).join("、")},
+    {h:"3️⃣ 最重要的，和需要的支持",t:support.join("、")},
+    {h:"4️⃣ 我發現還缺的",t:gapObjs().map(function(g){return g.label;}).join("、")},
+    {h:"5️⃣ 我這星期想試的小任務",t:taskText()},
+    {h:"6️⃣ 給未來自己的話",t:S.letter.trim()},
     {h:"🦉 AURORA 的話（系統自動產生，供參考）",t:feedback().join("")}
   ];
+  var blocks = raw.filter(function(b){ return b.t && b.t.trim() !== ""; });
   drawShare({ title:"未來人生模擬結果", subtitle:"我的理想人生藍圖｜我想活出的生活", code:"FC-LIFE / BLUEPRINT", blocks:blocks,
     bg0:"#1b1750", bg1:"#070916", accent:"#cdbfff", footer:"這是思考用的情境，不是對未來的預測", imgId:"shareImg", boxId:"shareBox", showCls:"show" });
 }
