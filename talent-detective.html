@@ -232,6 +232,14 @@
   .share-overlay button { background: var(--panel); border: 1px solid var(--yellow-dim); color: var(--text); border-radius: 6px; padding: 9px 26px; font-size: 13px; cursor: pointer; }
 
   @media (prefers-reduced-motion: reduce) { .scanbeam, .fp-scan, .cctv-top .rec, .scan-bar i, .stamp { animation: none !important; } .scan-bar i { width: 100%; } .reveal-block { opacity: 1; animation: none; } }
+
+  .report { border: 1px solid rgba(255,210,63,.45); background: rgba(255,210,63,.06); border-radius: 16px; padding: 16px; margin: 16px 0 6px; }
+  .report .rp-title { font-weight: 800; font-size: 15px; margin-bottom: 10px; }
+  .report .rp-step { font-size: 14px; line-height: 1.7; margin: 6px 0; }
+  .report .rp-step small { display: block; font-size: 11.5px; opacity: .7; margin-left: 1.6em; }
+  .report .rp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .report .rp-chips span { font-size: 11.5px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.1); }
+  a.rp-line { display: block; text-align: center; text-decoration: none; margin-top: 12px; padding: 15px 18px; border-radius: 8px; }
 </style>
 </head>
 <body>
@@ -246,6 +254,10 @@
 </div>
 
 <script>
+
+// 「回到 LINE」按鈕的連結：預設開啟 LINE；若要直接回到你的官方帳號，請改成 https://line.me/R/ti/p/@你的帳號ID
+var LINE_URL = "https://line.me/R/";
+
 /* ================= 資料設定 ================= */
 
 var ABILITIES = [
@@ -695,12 +707,18 @@ function renderStep5() {
     '</div>' +
 
     '<div class="aurora-panel">' +
-      '<div class="panel-head">' + OWL_SVG.replace('class="owl-avatar"', 'class="owl-avatar" style="width:34px;height:34px;"') + '<span class="label">AURORA ▸ 鑑識總結</span></div>' +
+      '<div class="panel-head">' + OWL_SVG.replace('class="owl-avatar"', 'class="owl-avatar" style="width:34px;height:34px;"') + '<span class="label">AURORA ▸ 鑑識總結（系統整理，供參考）</span></div>' +
       '<p>' + buildAuroraBackpackSummary(cards, signal) + '</p>' +
       (topAbility ? '<p class="tip-line">🌱 下一步：' + topAbility.next + '</p>' : '') +
       '<p class="tip-line">這些是目前找到的能力證據，不是你的能力上限。你還有很多技能等著被發現！</p>' +
     '</div>' +
 
+    '<div class="report"><div class="rp-title">✨ 探索完成！</div>' +
+      '<div class="rp-step">📸 ① 截圖你的「能力檔案」<small>請確認截圖包含整張卡片，或按下面「下載」取得完整圖片</small></div>' +
+      '<div class="rp-step">💬 ② 回到 LINE 聊天室傳送圖片</div>' +
+      '<div class="rp-step">🚀 ③ 再輸入【能力回報】</div>' +
+      '<div class="rp-chips"><span>⭐ 任務積分 +10</span><span>🌌 探索進度 +2%</span><span>🏅 獲得能力徽章</span></div></div>' +
+      '<a class="cta rp-line" href="' + LINE_URL + '">回到 LINE</a>' +
     '<div class="footer-actions">' +
       '<button class="cta" id="btnDownload"><span>下載能力檔案</span><span class="arrow">📥</span></button>' +
     '</div>'
@@ -842,92 +860,52 @@ function wrapCanvasText(ctx, text, maxWidth) {
 }
 
 function renderShareCard() {
-  var W = 640;
-  var FONT = "'PingFang TC', 'Microsoft JhengHei', sans-serif";
   var signal = computeAbilitySignal();
   var cards = (state.finalBackpack && state.finalBackpack.cards) || [];
-
-  var m = document.createElement("canvas").getContext("2d");
-  m.font = "14px " + FONT;
-  var items = cards.map(function(c) {
+  var blocks = cards.map(function(c, i) {
     var ab = getAbility(c.abilityId);
-    return { ab: ab, lines: wrapCanvasText(m, ab.desc, W - 190), ev: wrapCanvasText(m, firstEvidenceShort(c.abilityId, signal), W - 190) };
+    var flag = c.reaction === "yes" ? "（我覺得：很符合我）" : (c.reaction === "maybe" ? "（我覺得：有一點像我）" : "");
+    return { h: ab.icon + " " + (i + 1) + "．" + ab.name + flag, t: ab.desc + "\n證據：" + firstEvidenceShort(c.abilityId, signal) };
   });
-  var summaryLines = wrapCanvasText(m, buildAuroraBackpackSummary(cards, signal), W - 150);
+  blocks.push({ h: "🦉 AURORA 的整理（系統自動產生，供參考）", t: buildAuroraBackpackSummary(cards, signal) });
+  drawShare({ title: "能力探索結果", subtitle: "能力鑑識所｜我的能力檔案", code: "FC-ABL / PERSONAL ABILITY FILE", blocks: blocks,
+    bg0: "#1a1d2b", bg1: "#0b0d13", accent: "#ffd23f", footer: "這些是目前找到的能力證據，不是你的能力上限", imgId: "shareImg", boxId: "shareOverlay", showCls: "show",
+    deco: function(x, W) { x.save(); x.beginPath(); x.rect(26, 30, W - 52, 14); x.clip(); for (var sx = 16; sx < W; sx += 28) { x.fillStyle = "#ffd23f"; x.beginPath(); x.moveTo(sx, 44); x.lineTo(sx + 14, 44); x.lineTo(sx + 28, 30); x.lineTo(sx + 14, 30); x.closePath(); x.fill(); } x.restore(); } });
+}
 
-  var headerH = 250;
-  var itemsH = 0;
-  items.forEach(function(it) { itemsH += 22 + 30 + (it.lines.length + it.ev.length) * 22 + 44; });
-  var auroraH = 30 + 28 + summaryLines.length * 24 + 30;
-  var H = Math.max(780, headerH + itemsH + auroraH + 90);
-
-  var canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
-  var ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#0b0d13"; ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = "rgba(255,210,63,0.05)"; ctx.lineWidth = 1;
-  for (var gx = 0; gx < W; gx += 28) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
-  for (var gy = 0; gy < H; gy += 28) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
-
-  // 警戒膠帶
-  ctx.save();
-  ctx.beginPath(); ctx.rect(28, 28, W - 56, 14); ctx.clip();
-  for (var sx = 20; sx < W; sx += 28) {
-    ctx.fillStyle = "#ffd23f";
-    ctx.beginPath(); ctx.moveTo(sx, 42); ctx.lineTo(sx + 14, 42); ctx.lineTo(sx + 28, 28); ctx.lineTo(sx + 14, 28); ctx.closePath(); ctx.fill();
+// 下載圖片：先量測內容再決定高度；標題固定、文字放大、對比提高，方便手機截圖與 AI 辨識
+function drawShare(o) {
+  var W = 720, P = 64, F = "'PingFang TC','Microsoft JhengHei',sans-serif", BODY = 17, LH = 28;
+  var m = document.createElement("canvas").getContext("2d"); m.font = BODY + "px " + F;
+  function wrapLines(text, maxW) {
+    var out = [], line = "";
+    text.split("").forEach(function(ch) { var t = line + ch; if (m.measureText(t).width > maxW && line !== "") { out.push(line); line = ch; } else line = t; });
+    if (line) out.push(line); return out;
   }
-  ctx.restore();
-
-  ctx.strokeStyle = "rgba(255,210,63,0.45)"; ctx.lineWidth = 2;
-  ctx.strokeRect(28, 28, W - 56, H - 56);
-
-  ctx.textAlign = "center";
-  ctx.font = "11px monospace"; ctx.fillStyle = "rgba(232,201,136,0.8)";
-  ctx.fillText("FC-ABL / PERSONAL ABILITY FILE", W/2, 78);
-
-  ctx.save();
-  ctx.translate(W/2, 122); ctx.rotate(-0.1);
-  ctx.strokeStyle = "#ffd23f"; ctx.lineWidth = 3;
-  ctx.strokeRect(-110, -20, 220, 40);
-  ctx.font = "bold 16px monospace"; ctx.fillStyle = "#ffd23f";
-  ctx.fillText("DECLASSIFIED 已解封", 0, 6);
-  ctx.restore();
-
-  ctx.font = "bold 28px " + FONT; ctx.fillStyle = "#f4efe8"; ctx.fillText("我的能力檔案", W/2, 190);
-  ctx.font = "13px " + FONT; ctx.fillStyle = "rgba(141,148,166,0.95)"; ctx.fillText("未來羅盤．能力鑑識所", W/2, 216);
-
-  var y = headerH;
-  items.forEach(function(it, i) {
-    ctx.textAlign = "left";
-    ctx.font = "10px monospace"; ctx.fillStyle = "rgba(232,201,136,0.75)";
-    ctx.fillText("EVIDENCE TAG #0" + (i + 1), 70, y);
-    y += 30;
-
-    ctx.font = "26px sans-serif"; ctx.fillStyle = "#ffd23f"; ctx.fillText(it.ab.icon, 70, y);
-    ctx.font = "bold 20px " + FONT; ctx.fillStyle = "#f4efe8"; ctx.fillText(it.ab.name, 116, y);
-    y += 14;
-
-    ctx.font = "14px " + FONT; ctx.fillStyle = "rgba(160,168,186,0.95)";
-    it.lines.forEach(function(l) { y += 22; ctx.fillText(l, 116, y); });
-    ctx.fillStyle = "rgba(255,230,138,0.85)";
-    it.ev.forEach(function(l) { y += 22; ctx.fillText(l, 116, y); });
-    y += 30;
+  o.blocks.forEach(function(b) { b.lines = []; b.t.split("\n").forEach(function(par) { wrapLines(par, W - P * 2 - (b.indent || 0)).forEach(function(l) { b.lines.push(l); }); }); });
+  var H = 250; o.blocks.forEach(function(b) { H += 46 + b.lines.length * LH + 24; }); H = Math.max(H + 100, 820);
+  var c = document.createElement("canvas"); c.width = W; c.height = H; var x = c.getContext("2d");
+  var g = x.createRadialGradient(W * .7, 0, 0, W / 2, H * .4, H); g.addColorStop(0, o.bg0); g.addColorStop(1, o.bg1); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = "rgba(255,255,255,0.35)"; for (var i = 0; i < 60; i++) { x.beginPath(); x.arc(Math.random() * W, Math.random() * H, Math.random() * 1.4 + .3, 0, 7); x.fill(); }
+  if (o.deco) o.deco(x, W, H);
+  x.strokeStyle = o.accent; x.globalAlpha = .55; x.lineWidth = 2; x.strokeRect(26, 30, W - 52, H - 60); x.globalAlpha = 1;
+  x.textAlign = "center";
+  x.font = "bold 28px " + F; x.fillStyle = "#ffffff"; x.fillText("未來羅盤｜" + o.title, W / 2, 96);
+  x.font = "15px " + F; x.fillStyle = o.accent; x.fillText(o.subtitle, W / 2, 128);
+  x.font = "13px monospace"; x.fillStyle = "#c9cde6"; x.fillText(o.code, W / 2, 156);
+  x.textAlign = "left";
+  var y = 210;
+  o.blocks.forEach(function(b) {
+    x.strokeStyle = "rgba(255,255,255,0.18)"; x.lineWidth = 1; x.setLineDash([4, 5]); x.beginPath(); x.moveTo(P, y - 22); x.lineTo(W - P, y - 22); x.stroke(); x.setLineDash([]);
+    x.font = "bold 20px " + F; x.fillStyle = o.accent; x.fillText(b.h, P, y + 6);
+    y += 46;
+    x.font = BODY + "px " + F; x.fillStyle = "#eceef8";
+    b.lines.forEach(function(l) { x.fillText(l, P + (b.indent || 0), y); y += LH; });
+    y += 24;
   });
-
-  y += 8;
-  ctx.textAlign = "center";
-  ctx.font = "bold 14px sans-serif"; ctx.fillStyle = "#ffd23f";
-  ctx.fillText("AURORA ▸ 鑑識總結", W/2, y);
-  y += 12;
-  ctx.font = "14px " + FONT; ctx.fillStyle = "#e6eaee";
-  summaryLines.forEach(function(l) { y += 24; ctx.fillText(l, W/2, y); });
-
-  ctx.font = "11px " + FONT; ctx.fillStyle = "rgba(141,148,166,0.75)";
-  ctx.fillText("這些是目前找到的能力證據，不是你的能力上限", W/2, H - 50);
-
-  document.getElementById("shareImg").src = canvas.toDataURL("image/png");
-  document.getElementById("shareOverlay").classList.add("show");
+  x.textAlign = "center"; x.font = "14px " + F; x.fillStyle = "#c9cde6"; x.fillText(o.footer, W / 2, H - 56);
+  document.getElementById(o.imgId).src = c.toDataURL("image/png");
+  document.getElementById(o.boxId).classList.add(o.showCls);
 }
 
 function closeShare() { document.getElementById("shareOverlay").classList.remove("show"); }

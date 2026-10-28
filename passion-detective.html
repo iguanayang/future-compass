@@ -416,6 +416,14 @@
   .share-overlay button { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 9px 26px; font-size: 13px; cursor: pointer; }
 
   @media (prefers-reduced-motion: reduce) { .star, .result-intro .big-icon { animation: none !important; } }
+
+  .report { border: 1px solid rgba(255,157,92,.4); background: rgba(255,157,92,.06); border-radius: 16px; padding: 16px; margin: 16px 0 6px; }
+  .report .rp-title { font-weight: 800; font-size: 15px; margin-bottom: 10px; }
+  .report .rp-step { font-size: 14px; line-height: 1.7; margin: 6px 0; }
+  .report .rp-step small { display: block; font-size: 11.5px; opacity: .7; margin-left: 1.6em; }
+  .report .rp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .report .rp-chips span { font-size: 11.5px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.1); }
+  a.rp-line { display: block; text-align: center; text-decoration: none; margin-top: 12px; padding: 15px 22px; }
 </style>
 </head>
 <body>
@@ -436,6 +444,10 @@
 </div>
 
 <script>
+
+// 「回到 LINE」按鈕的連結：預設開啟 LINE；若要直接回到你的官方帳號，請改成 https://line.me/R/ti/p/@你的帳號ID
+var LINE_URL = "https://line.me/R/";
+
 /* ================= 資料設定 ================= */
 
 var CLUES = [
@@ -1003,12 +1015,18 @@ function renderStep4() {
     '</div>' +
 
     '<div class="aurora-panel">' +
-      '<div class="panel-head">' + OWL_SVG.replace('class="owl-avatar"', 'class="owl-avatar" style="width:36px;height:36px;"') + '<span class="label">AURORA 的觀察</span></div>' +
+      '<div class="panel-head">' + OWL_SVG.replace('class="owl-avatar"', 'class="owl-avatar" style="width:36px;height:36px;"') + '<span class="label">AURORA 的觀察（系統整理，供參考）</span></div>' +
       '<p>' + buildAuroraSummary(top) + '</p>' +
       pairInsight +
       '<p class="tip-line">🌱 熱情線索也可能隨經驗慢慢改變。這張地圖記錄的不是「你永遠都是這樣」，而是現在的你，做過幾次選擇後，最容易被點燃的地方。</p>' +
     '</div>' +
 
+    '<div class="report"><div class="rp-title">✨ 探索完成！</div>' +
+      '<div class="rp-step">📸 ① 截圖你的「熱情探索卡」<small>請確認截圖包含整張卡片，或按下面「下載」取得完整圖片</small></div>' +
+      '<div class="rp-step">💬 ② 回到 LINE 聊天室傳送圖片</div>' +
+      '<div class="rp-step">🚀 ③ 再輸入【熱情回報】</div>' +
+      '<div class="rp-chips"><span>⭐ 任務積分 +10</span><span>🌌 探索進度 +2%</span><span>🏅 獲得熱情徽章</span></div></div>' +
+      '<a class="cta rp-line" href="' + LINE_URL + '">回到 LINE</a>' +
     '<div class="footer-actions">' +
       '<button class="cta" id="btnDownload"><span>下載探索卡</span><span class="arrow">📥</span></button>' +
     '</div>'
@@ -1117,74 +1135,48 @@ function wrapCanvasText(ctx, text, maxWidth) {
 }
 
 function renderShareCard() {
-  var W = 640;
-  var FONT = "'PingFang TC', 'Microsoft JhengHei', sans-serif";
-  var shareResults = (state.finalClues && state.finalClues.results) || [];
-
-  var m = document.createElement("canvas").getContext("2d");
-  m.font = "14px " + FONT;
-  var items = shareResults.map(function(r) {
-    return { r: r, lines: wrapCanvasText(m, r.desc, W - 190) };
+  var res = (state.finalClues && state.finalClues.results) || [];
+  var blocks = res.map(function(r, i) {
+    return { h: r.icon + " " + (i + 1) + "．" + r.name, t: r.desc + (r.evidence ? "\n依據：" + r.evidence.replace(/^這在/, "在") : "") };
   });
-  var summaryLines = wrapCanvasText(m, buildAuroraSummary(shareResults), W - 150);
+  blocks.push({ h: "🦉 AURORA 的整理（系統自動產生，供參考）", t: buildAuroraSummary(res) });
+  drawShare({ title: "熱情探索結果", subtitle: "熱情偵探｜我的熱情線索", code: "FC-PASSION / RESULT", blocks: blocks,
+    bg0: "#1c1730", bg1: "#0a0a16", accent: "#ff9d5c", footer: "這不是最終答案，是目前找到的線索", imgId: "shareImg", boxId: "shareOverlay", showCls: "show" });
+}
 
-  var headerH = 235;
-  var itemsH = 0;
-  items.forEach(function(it) { itemsH += 22 + 30 + it.lines.length * 22 + 30; });
-  var auroraH = 30 + 28 + summaryLines.length * 24 + 30;
-  var H = Math.max(760, headerH + itemsH + auroraH + 90);
-
-  var canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
-  var ctx = canvas.getContext("2d");
-
-  var grad = ctx.createRadialGradient(W/2, 0, 0, W/2, H*0.4, H*0.9);
-  grad.addColorStop(0, "#1c1730");
-  grad.addColorStop(1, "#0a0a16");
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-
-  ctx.fillStyle = "rgba(255,255,255,0.4)";
-  for (var i = 0; i < 50; i++) { ctx.beginPath(); ctx.arc(Math.random()*W, Math.random()*H, Math.random()*1.4+0.3, 0, Math.PI*2); ctx.fill(); }
-
-  ctx.strokeStyle = "rgba(255,157,92,0.35)"; ctx.lineWidth = 2;
-  ctx.strokeRect(28, 28, W - 56, H - 56);
-
-  ctx.textAlign = "center";
-  ctx.font = "11px monospace"; ctx.fillStyle = "rgba(232,201,136,0.75)";
-  ctx.fillText("EMBER ROUTE / RESULT CARD", W/2, 70);
-  ctx.font = "50px sans-serif"; ctx.fillText("🌟", W/2, 128);
-  ctx.font = "bold 28px " + FONT; ctx.fillStyle = "#f4efe8"; ctx.fillText("我的熱情線索", W/2, 172);
-  ctx.font = "13px " + FONT; ctx.fillStyle = "rgba(153,147,171,0.9)"; ctx.fillText("未來羅盤．熱情偵探", W/2, 198);
-
-  var y = headerH;
-  items.forEach(function(it, i) {
-    ctx.textAlign = "left";
-    ctx.font = "10px monospace"; ctx.fillStyle = "rgba(232,201,136,0.65)";
-    ctx.fillText("EMBER ROUTE / NODE 0" + (i + 1), 70, y);
-    y += 30;
-
-    ctx.font = "26px sans-serif"; ctx.fillStyle = "#ff9d5c"; ctx.fillText(it.r.icon, 70, y);
-    ctx.font = "bold 20px " + FONT; ctx.fillStyle = "#f4efe8"; ctx.fillText(it.r.name, 116, y);
-    y += 14;
-
-    ctx.font = "14px " + FONT; ctx.fillStyle = "rgba(165,159,183,0.95)";
-    it.lines.forEach(function(l) { y += 22; ctx.fillText(l, 116, y); });
-    y += 38;
+// 下載圖片：先量測內容再決定高度；標題固定、文字放大、對比提高，方便手機截圖與 AI 辨識
+function drawShare(o) {
+  var W = 720, P = 64, F = "'PingFang TC','Microsoft JhengHei',sans-serif", BODY = 17, LH = 28;
+  var m = document.createElement("canvas").getContext("2d"); m.font = BODY + "px " + F;
+  function wrapLines(text, maxW) {
+    var out = [], line = "";
+    text.split("").forEach(function(ch) { var t = line + ch; if (m.measureText(t).width > maxW && line !== "") { out.push(line); line = ch; } else line = t; });
+    if (line) out.push(line); return out;
+  }
+  o.blocks.forEach(function(b) { b.lines = []; b.t.split("\n").forEach(function(par) { wrapLines(par, W - P * 2 - (b.indent || 0)).forEach(function(l) { b.lines.push(l); }); }); });
+  var H = 250; o.blocks.forEach(function(b) { H += 46 + b.lines.length * LH + 24; }); H = Math.max(H + 100, 820);
+  var c = document.createElement("canvas"); c.width = W; c.height = H; var x = c.getContext("2d");
+  var g = x.createRadialGradient(W * .7, 0, 0, W / 2, H * .4, H); g.addColorStop(0, o.bg0); g.addColorStop(1, o.bg1); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = "rgba(255,255,255,0.35)"; for (var i = 0; i < 60; i++) { x.beginPath(); x.arc(Math.random() * W, Math.random() * H, Math.random() * 1.4 + .3, 0, 7); x.fill(); }
+  if (o.deco) o.deco(x, W, H);
+  x.strokeStyle = o.accent; x.globalAlpha = .55; x.lineWidth = 2; x.strokeRect(26, 30, W - 52, H - 60); x.globalAlpha = 1;
+  x.textAlign = "center";
+  x.font = "bold 28px " + F; x.fillStyle = "#ffffff"; x.fillText("未來羅盤｜" + o.title, W / 2, 96);
+  x.font = "15px " + F; x.fillStyle = o.accent; x.fillText(o.subtitle, W / 2, 128);
+  x.font = "13px monospace"; x.fillStyle = "#c9cde6"; x.fillText(o.code, W / 2, 156);
+  x.textAlign = "left";
+  var y = 210;
+  o.blocks.forEach(function(b) {
+    x.strokeStyle = "rgba(255,255,255,0.18)"; x.lineWidth = 1; x.setLineDash([4, 5]); x.beginPath(); x.moveTo(P, y - 22); x.lineTo(W - P, y - 22); x.stroke(); x.setLineDash([]);
+    x.font = "bold 20px " + F; x.fillStyle = o.accent; x.fillText(b.h, P, y + 6);
+    y += 46;
+    x.font = BODY + "px " + F; x.fillStyle = "#eceef8";
+    b.lines.forEach(function(l) { x.fillText(l, P + (b.indent || 0), y); y += LH; });
+    y += 24;
   });
-
-  y += 8;
-  ctx.textAlign = "center";
-  ctx.font = "bold 14px sans-serif"; ctx.fillStyle = "#ff9d5c";
-  ctx.fillText("AURORA 的發現", W/2, y);
-  y += 12;
-  ctx.font = "14px " + FONT; ctx.fillStyle = "#e6e0ee";
-  summaryLines.forEach(function(l) { y += 24; ctx.fillText(l, W/2, y); });
-
-  ctx.font = "11px " + FONT; ctx.fillStyle = "rgba(153,147,171,0.7)";
-  ctx.fillText("這不是最終答案，是目前找到的線索", W/2, H - 50);
-
-  document.getElementById("shareImg").src = canvas.toDataURL("image/png");
-  document.getElementById("shareOverlay").classList.add("show");
+  x.textAlign = "center"; x.font = "14px " + F; x.fillStyle = "#c9cde6"; x.fillText(o.footer, W / 2, H - 56);
+  document.getElementById(o.imgId).src = c.toDataURL("image/png");
+  document.getElementById(o.boxId).classList.add(o.showCls);
 }
 
 function closeShare() {
